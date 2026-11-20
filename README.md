@@ -14,25 +14,21 @@
 
 **ChatGPT Work на компьютере.** Добавьте публичный каталог под пользователем настольного ChatGPT. Команды для новой установки и уже настроенного каталога приведены в разделе [Windows и Linux](#настольный-chatgpt-work-на-windows-и-linux).
 
-**Claude Cowork.** Пока 1.169.2 находится в ветке PR, скачайте [ZIP облегчённого скилла 1.169.2](https://raw.githubusercontent.com/dqdp/marengo-marketplace/be60fcb9f14c9d98920316ec2663b823b0ff82d2/downloads/marengo-market-data-skill-1.169.2.zip) и загрузите файл в Claude по разделу 5 инструкции. После публикации нужной версии в `main` в разделе Customize → Plugins выберите Add marketplace → Add from a repository, укажите `dqdp/marengo-marketplace` и установите Marengo Market Data. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+**Claude Cowork.** Откройте **Cowork → Customize → Plugins → Add → Add marketplace → Add from a repository**, введите `dqdp/marengo-marketplace` и добавьте **Marengo Market Data** из этого каталога. Для последующих версий сохраняйте подключение репозитория. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
 
 ### Настольный ChatGPT Work на Windows и Linux
 
-Каталог устанавливается под пользователем ОС, который запускает ChatGPT. На Windows откройте обычный PowerShell на этом компьютере. Для установки из GitHub понадобятся Git и Codex CLI с командой `plugin marketplace`. На Linux используйте терминал того же пользователя. Для новой установки используйте публичный HTTPS-адрес. Действующее SSH-подключение на ранее настроенном компьютере можно сохранить.
-
-Пока облегчённая версия 1.169.2 проходит через [PR каталога](https://github.com/dqdp/marengo-marketplace/pull/1), первая установка из её ветки выполняется так:
+Под пользователем ОС, который запускает ChatGPT, добавьте публичный HTTPS-каталог из ветки `main`. На Windows откройте обычный PowerShell, на Linux — терминал того же пользователя.
 
 ```powershell
-codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref docs/personal-install-light-skill
+codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref main
 codex plugin add marengo-market-data@marengo
 codex plugin list --marketplace marengo --json
 ```
 
-Если каталог `marengo` уже добавлен, сначала выполните `codex plugin list --marketplace marengo --available --json`. Если доступна нужная версия, выполните только установку плагина. Если каталог указывает на тот же репозиторий, отслеживает другую ветку и список `installed` пуст, удалите его регистрацию командой `codex plugin marketplace remove marengo` и повторите установку с нужной веткой. После публикации нужной версии в `main` используйте `--ref main` для новых устройств. Команда `codex plugin marketplace upgrade marengo` обновляет уже выбранную ветку.
+Ожидаемый результат — установленная и включённая редакция 1.169.2 или более новая. Если `marengo` уже зарегистрирован, проверьте источник и действуйте по разделу 4 инструкции. Для обновления каталога выполните `codex plugin marketplace upgrade marengo`, примените доступное обновление плагина и сверьте установленную версию. Полностью закройте и откройте настольный ChatGPT и проверьте **Work → Plugins → Marengo → Marengo Market Data** в новом чате. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
 
-Полностью закройте и откройте настольный ChatGPT. В режиме **Work** откройте **Plugins**, выберите каталог **Marengo** и карточку **Marengo Market Data**. В новом чате попросите: «Используй Market Data и получи лучший bid и ask ES через Marengo. Покажи время котировки». Если Work предлагает подключить источник, пройдите первый вход для Marengo в этом клиенте. Windows CI отдельно проверяет файлы, график на синтетических данных и установку через нативный CLI. Для проверки интерфейса и OAuth нужен запуск настольного Work под пользователем. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
-
-При переходе с ручного ZIP проверьте версию плагина в новой сессии и отключите прежний вручную добавленный market-data. Если ZIP распаковывали в личную папку skills, перенесите старую папку market-data за пределы каталогов обнаружения. Проверьте, что в новой сессии видна одна редакция.
+При переходе с вручную загруженного скилла выключите прежнюю копию после установки из каталога. Если прежний ZIP распаковывали в личную папку skills, перенесите только старую папку market-data за пределы каталогов обнаружения.
 
 **Подключение данных на чистом компьютере**
 

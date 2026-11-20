@@ -14,7 +14,7 @@
 | Обновление скилла из GitHub | [Публичный каталог Marengo](https://github.com/dqdp/marengo-marketplace) доступен по HTTPS без аккаунта GitHub, приглашения, SSH-ключа или доступа к приватным репозиториям. Для установки в ChatGPT через каталог нужны Git и Codex CLI |
 
 1. Установите или обновите настольные приложения. Если используете на Windows тот же аккаунт, что на Linux, сначала посмотрите уже подключённые плагины и выполните проверку из раздела 7. Подключение, которое уже работает, можно сохранить. [ChatGPT Desktop](https://chatgpt.com/download/), [Claude Desktop](https://claude.com/download)
-2. Получите у оператора установочный комплект для Windows и распакуйте внешний ZIP в постоянную папку своего профиля, например `Документы\Marengo`. Внутри находятся **Start-here.html**, **marengo-data-0.1.4.zip**, **marengo-market-data-skill-1.169.2.zip** и папка **Work-Marketplace**. Два внутренних ZIP выбираются в соответствующих приложениях целиком.
+2. Для подключения **Marengo Data в ChatGPT Work** оператор передаёт файл **marengo-data-0.1.4.zip**. Если вы получили внешний комплект Windows, распакуйте его один раз и оставьте внутренний ZIP коннектора целым. **Marengo Market Data** в обоих клиентах устанавливается из публичного репозитория `dqdp/marengo-marketplace`. В Claude сам MCP подключается по HTTPS.
 3. Откройте [личный кабинет Marengo](https://account.marengo.net/) и войдите под приглашённым пользователем. В разделе ключей проверьте Databento. Если ключ ещё не сохранён, введите его в кабинете. Повторное сохранение ключа может сбросить подтверждение покрытия подписки для этого ключа. При необходимости администратор проверяет доступ к коннекторам и подтверждение плана для текущей версии ключа. Дополнительные источники COT, например EIA, используют собственные реквизиты по мере необходимости.
 4. Для работы с каталогом ChatGPT установите Git for Windows и Codex CLI под тем же пользователем Windows. Если CLI ещё нет, установите Node.js LTS, откройте обычный PowerShell и выполните команды ниже. После установки программ при необходимости откройте новый PowerShell. [Git for Windows](https://git-scm.com/downloads/win), [Node.js LTS](https://nodejs.org/en/download/), [Codex CLI](https://developers.openai.com/codex/cli)
 
@@ -53,51 +53,48 @@ ssh -4 -N -o ExitOnForwardFailure=yes -L 127.0.0.1:3002:127.0.0.1:3002 USER@SERV
 
 ## 4. Скилл Market Data в ChatGPT Work
 
-**Установка из публичного каталога GitHub с возможностью обновления.** В PowerShell выполните команды по одной. Если какая-либо команда завершилась ошибкой, сначала устраните её. На дату инструкции `main` ещё содержит прежнюю 1.168.0, а **1.169.2** находится в ветке ниже. После включения нужной версии в `main` для новых установок используйте `--ref main`. [PR и состояние поставки](https://github.com/dqdp/marengo-marketplace/pull/1)
+**Установка из публичного репозитория.** Откройте обычный PowerShell под тем же пользователем Windows, который запускает ChatGPT. Используйте HTTPS и основную ветку `main`.
 
 ```powershell
-git ls-remote --exit-code https://github.com/dqdp/marengo-marketplace.git refs/heads/docs/personal-install-light-skill
+$repo = 'https://github.com/dqdp/marengo-marketplace.git'
+git ls-remote --exit-code $repo refs/heads/main
 codex plugin marketplace list --json
 ```
 
-Команда `git ls-remote` должна вывести ветку и хеш коммита без входа в GitHub. Если каталога `marengo` ещё нет, выполните следующие команды.
+Если `marengo` ещё не добавлен, выполните следующие команды в том же окне.
 
 ```powershell
-codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref docs/personal-install-light-skill
+codex plugin marketplace add $repo --ref main
 codex plugin list --marketplace marengo --available --json
 codex plugin add marengo-market-data@marengo
 codex plugin list --marketplace marengo --json
 ```
 
-В последней команде найдите `marengo-market-data@marengo`, `version: 1.169.2`, `installed: true` и `enabled: true`. Для новой установки оставьте HTTPS. Если на вашем старом компьютере уже работает SSH, его можно сохранить.
+Проверьте запись `marengo-market-data@marengo`: версия 1.169.2 или более новая, `installed: true`, `enabled: true`. Полностью закройте и откройте ChatGPT. В **Work → Plugins → Marengo** откройте **Marengo Market Data** и проверьте его в новом чате. [Каталоги плагинов ChatGPT](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
 
-**Если появляется `marketplace 'marengo' is already added from a different source`.** Посмотрите источник через `codex plugin marketplace list --json`, установленные плагины через `codex plugin list --marketplace marengo --json` и доступную версию через `codex plugin list --marketplace marengo --available --json`.
+**Если каталог уже есть.** Выполните `codex plugin marketplace list --json` и `codex plugin list --marketplace marengo --json`. Проверьте репозиторий, ветку и установленные плагины.
 
-- Если уже установлена и включена 1.169.2, перейдите к проверке в Work. Если версия доступна для установки, установите или обновите плагин из этого каталога и сверьте результат.
-- Если источник — этот же репозиторий, но старая ветка, запишите прежний URL, ветку и версию для отката. Если единственная запись в `installed` — старая версия `marengo-market-data@marengo`, выполните `codex plugin remove marengo-market-data@marengo`. Команда удаляет локальную копию именно этого плагина. Снова выполните `codex plugin list --marketplace marengo --json`.
-- Когда список `installed` пуст, выполните `codex plugin marketplace remove marengo`, затем повторите установку из нужной ветки выше или из папки комплекта ниже. Если в списке остаются другие плагины либо URL относится к другому репозиторию, сохраните их текущую регистрацию и передайте оператору имена и источник для совместимой настройки.
+- Если каталог указывает на этот репозиторий и отслеживает `main`, используйте его для установки или обновления.
+- Если отслеживается старая ветка, запишите URL, ветку и версию для отката. Когда единственный установленный плагин — старый `marengo-market-data@marengo`, выполните `codex plugin remove marengo-market-data@marengo` и снова проверьте список установленных плагинов.
+- При пустом списке `installed` выполните `codex plugin marketplace remove marengo` и повторите установку из `main` выше. Если есть другие плагины или другой репозиторий, сохраните регистрацию и передайте оператору список и источник.
 
-**Установка из комплекта, если GitHub недоступен клиенту.** Откройте PowerShell прямо в распакованной папке комплекта и на чистом профиле выполните:
+**Как обновлять.** В том же профиле выполните команды ниже. Откройте карточку Marengo Market Data, примените обновление, если оно предложено, и проверьте установленную версию в новом чате.
 
 ```powershell
-codex plugin marketplace add (Resolve-Path .\Work-Marketplace).Path
-codex plugin add marengo-market-data@marengo
+codex plugin marketplace upgrade marengo
+codex plugin list --marketplace marengo --available --json
 codex plugin list --marketplace marengo --json
 ```
 
-Оставьте папку **Work-Marketplace** на диске. Для этой установки следующую версию поставляет оператор. Для Git-источника каталог обновляется командой `codex plugin marketplace upgrade marengo` в пределах выбранной ветки. Затем откройте карточку плагина, примените обновление, если оно предложено, и проверьте версию командой `plugin list`.
-
-Полностью закройте и откройте ChatGPT. В режиме **Work → Plugins → Marengo** откройте **Marengo Market Data** и проверьте, что он включён. Для проверки используйте новый чат. [Каталоги плагинов в настольном ChatGPT](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
-
 ## 5. Скилл Market Data в Claude Cowork
 
-**Установка версии 1.169.2.**
+**Подключение публичного репозитория.**
 
-1. Откройте **Customize → Skills → + → Create skill → Upload a skill**.
-2. Выберите **marengo-market-data-skill-1.169.2.zip** из комплекта или [скачайте тот же ZIP из публичного каталога](https://raw.githubusercontent.com/dqdp/marengo-marketplace/be60fcb9f14c9d98920316ec2663b823b0ff82d2/downloads/marengo-market-data-skill-1.169.2.zip). Внутри него папка `market-data` с `SKILL.md`, справочником Alpha Vantage и скриптами графика и греков. Если Claude сообщает о совпадении имени с вручную загруженным скиллом, сохраните прежний ZIP и замените только эту копию через её карточку.
-3. Включите появившийся **market-data**, откройте новый чат **Cowork** и оставьте включённой одну самостоятельную редакцию Market Data. [Загрузка скиллов в Claude](https://support.claude.com/en/articles/12512180-use-skills-in-claude)
+1. Откройте вкладку **Cowork → Customize → Plugins**, затем **Add → Add marketplace → Add from a repository**.
+2. Введите **dqdp/marengo-marketplace**, добавьте каталог и откройте его. Выберите **Marengo Market Data → Add**. На дату инструкции редакция с обычными ценовыми графиками имеет версию **1.169.2**. Для каталога используется та же основная ветка, что в ChatGPT.
+3. Откройте новый чат Cowork. Через **+** или **/** проверьте доступность скилла **market-data** из плагина **Marengo Market Data**. Если осталась вручную загруженная старая копия, выключите её и повторите проверку в новом чате. [Установка из репозитория в Claude](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
 
-**Обновления из GitHub.** Когда в `main` публичного каталога будет 1.169.2 или нужная более новая редакция, откройте **Customize → Plugins → Add → Add marketplace → Add from a repository**. Укажите `dqdp/marengo-marketplace` и установите **Marengo Market Data**. Если Claude предложит подключить GitHub к самому приложению, альтернативой остаётся публичный ZIP. Сверьте версию, затем выключите вручную загруженную копию. У ZIP-копии обновление выполняется повторной загрузкой. [Каталоги плагинов Claude](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+**Как обновлять.** Оператор публикует следующую версию в `main` того же каталога. Оставьте marketplace подключённым. После публикации откройте его в **Customize → Plugins**, примените обновление, если Claude его предлагает, и сверьте версию установленного плагина. Фиксированный срок автоматического обновления в личном Cowork не подтверждён.
 
 ## 6. БКС для MOEX и Alpha Vantage
 
