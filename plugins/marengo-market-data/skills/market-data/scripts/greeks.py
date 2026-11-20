@@ -142,9 +142,12 @@ def implied_vol(price, K, T, *, F=None, S=None, r=0.0, q=0.0, is_call=True,
         return black76(F, K, T, sig, r=r, is_call=is_call).price
 
     # No-arbitrage bounds check.
-    if price <= price_at(lo):
+    if not math.isfinite(price) or price <= price_at(lo):
         return None
-    if price >= price_at(hi):
+    upper = price_at(hi)
+    if price > upper:
+        return None
+    if price == upper:
         return hi
 
     sig = 0.2
@@ -169,7 +172,7 @@ def implied_vol(price, K, T, *, F=None, S=None, r=0.0, q=0.0, is_call=True,
             else:
                 lo = sig
         sig = new
-    return sig
+    return sig if abs(price_at(sig) - price) < tol else None
 
 
 def forward_from_parity(call_price, put_price, K, T, r=0.0):
@@ -246,7 +249,7 @@ def main(argv=None):
         sig = implied_vol(a.price, a.K, a.T, F=a.F, S=a.S, r=a.r, q=a.q,
                           is_call=is_call, model=a.model)
         if sig is None:
-            print("no solution (price below intrinsic?)")
+            print("no implied volatility within model bounds and solver tolerance")
             return
         g = (black_scholes(a.S, a.K, a.T, sig, r=a.r, q=a.q, is_call=is_call)
              if a.model == "bs"

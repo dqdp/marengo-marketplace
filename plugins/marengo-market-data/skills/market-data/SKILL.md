@@ -1,7 +1,7 @@
 ---
 name: market-data
 description: Поиск инструментов, текущие котировки, лучшие bid/ask, исторические свечи и простые ценовые графики через Marengo Databento, БКС и Alpha Vantage.
-version: 1.169.0
+version: 1.169.1
 ---
 
 # Рыночные данные и ценовые графики

@@ -88,13 +88,23 @@ def verify():
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source",type=Path)
-    parser.add_argument("--ref",default="HEAD")
+    parser.add_argument("--ref",default=None)
+    parser.add_argument("--check-source",type=Path,help="Verify the pinned source without changing the catalog")
     args=parser.parse_args()
+    if args.check_source:
+        if args.source:
+            parser.error("--source and --check-source are mutually exclusive")
+        pinned = verify()
+        _, expected = build(args.check_source.resolve(), args.ref or pinned["commit"])
+        if pinned != expected:
+            raise ValueError("Catalog differs from source commit")
+        print("Verified source", expected["commit"])
+        return
     if not args.source:
         print("Verified",verify()["version"])
         return
     old=verify() if (ROOT/"release.json").exists() else None
-    files,lock=build(args.source.resolve(),args.ref)
+    files,lock=build(args.source.resolve(),args.ref or "HEAD")
     if old == lock:
         print("Already current",lock["version"])
         return
