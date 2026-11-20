@@ -4,19 +4,21 @@
 
 ## Первое подключение
 
-**ChatGPT Work.** Администратор открывает Admin Console → нужный workspace → Plugins → Add → Import marketplace. Source — `https://github.com/dqdp/marengo-marketplace`, Path — `chatgpt`. После импорта разрешите Marengo Market Data нужным пользователям и проверьте, что ежедневная синхронизация включена. [Инструкция OpenAI](https://help.openai.com/en/articles/20001504-importing-and-syncing-plugin-marketplaces-from-github)
+Для клиентской установки нужен облегчённый Market Data Skill из отдельного приватного репозитория `dqdp/market_data_skill`. Текущий выпуск каталога **1.168.0** содержит полную редакцию с аналитическими дашбордами. Для установки облегчённой редакции дождитесь выпуска, в описании которого указаны её исходный коммит и состав пакета.
 
-**Claude Cowork.** В Organization settings → Plugins & skills → Marketplaces выберите Sync from GitHub и репозиторий `dqdp/marengo-marketplace`, ветку `main`. Включите Sync automatically. GitHub App и импортирующей учётной записи требуется доступ к этому приватному репозиторию. [Инструкция Anthropic](https://support.claude.com/en/articles/13837433-manage-plugins-for-your-organization)
+Пользователю личного аккаунта нужен доступ на чтение приватного каталога `dqdp/marengo-marketplace`. Каталог содержит файлы скилла, поэтому отдельный доступ к репозиторию разработки для установки не требуется.
 
-Сотруднику нужен доступ к плагину в своём пространстве. Marengo MCP, БКС с правом чтения и Alpha Vantage авторизуются отдельно. Скилл выбирает Marengo для котировок CME, БКС для текущих котировок MOEX, прежний Alpha Vantage для акций США и ETF. Ключи и рыночные выгрузки в каталог не входят.
+**ChatGPT Work на компьютере.** На машине пользователя с настроенным GitHub SSH и Codex CLI добавьте каталог командой `codex plugin marketplace add git@github.com:dqdp/marengo-marketplace.git --ref main`. Перезапустите настольный ChatGPT, откройте каталог плагинов в режиме Work, выберите Marengo и установите Marengo Market Data. Обновить локальную копию каталога можно командой `codex plugin marketplace upgrade marengo`. Перезапустите приложение и проверьте версию установленного плагина. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
 
-При переходе с ручного ZIP сначала проверьте доступность новой установки, затем отключите дублирующую ручную копию аналитического скилла. Сохраните действующие подключения к данным.
+**Claude Cowork.** В разделе Customize → Plugins выберите Add marketplace → Add from a repository, укажите `dqdp/marengo-marketplace` и установите Marengo Market Data. Для приватного каталога подтвердите доступ к GitHub. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+
+Marengo MCP, БКС с правом чтения и Alpha Vantage авторизуются отдельно. После установки проверьте маршруты данных в новой сессии: CME через Marengo, текущие котировки MOEX через БКС, акции США и ETF через Alpha Vantage.
 
 ## Публикация обновления
 
 1. Повысьте `version` в исходном `SKILL.md`, проверьте изменение и отправьте исходный коммит в GitHub.
 2. Оператор с доступом к обоим репозиториям запускает из копии каталога `python3 tools/propose.py ПОЛНЫЙ_SHA`. Используются обычные git/SSH и gh оператора. Команда собирает обе версии в отдельной временной папке и открывает PR в каталог. Повтор возвращает существующий PR или статус уже опубликованного SHA.
-3. Проверьте CI и изменения, затем объедините PR в `main`. Cowork запускает синхронизацию при слиянии с повышением версии. ChatGPT выполняет ежедневную синхронизацию. При срочной поставке администратор может запустить ручную синхронизацию.
+3. Проверьте CI и изменения, затем объедините PR в `main`. Обновите каталог на клиентском устройстве и сверьте версию плагина с release.json.
 4. В каждом клиенте откройте новую сессию, проверьте установленную версию и запросите котировку по известному инструменту. Для возврата к прежней логике выпустите исправление с новым номером версии.
 
 Локальная проверка каталога выполняется командой `python3 tools/release.py`. Для сверки с исходниками используйте `python3 tools/release.py --source /path/to/market_data_skill --ref ПОЛНЫЙ_SHA`.
