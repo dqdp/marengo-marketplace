@@ -25,3 +25,35 @@ jobs:
           if new != old and tuple(map(int,new['version'].split('.'))) <= tuple(map(int,old['version'].split('.'))):
               raise SystemExit('Bump the source skill version before publishing an update')
           PY
+  work-windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify the Windows checkout and render an offline chart
+        run: |
+          python tools/release.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tools -p "test_*.py"
+      - name: Install the Work marketplace using native Windows Codex
+        run: |
+          npm.cmd install --global '@openai/codex@0.155.0'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          codex.cmd plugin marketplace add "$env:GITHUB_WORKSPACE" --json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          codex.cmd plugin add marengo-market-data@marengo --json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $listing = codex.cmd plugin list --marketplace marengo --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $expected = (Get-Content release.json -Raw -Encoding utf8 | ConvertFrom-Json).version
+          $plugin = @($listing.installed | Where-Object { $_.pluginId -eq 'marengo-market-data@marengo' })
+          if ($plugin.Count -ne 1 -or $plugin[0].version -ne $expected -or !$plugin[0].installed -or !$plugin[0].enabled) {
+            throw "Expected installed and enabled Marengo Market Data $expected"
+          }

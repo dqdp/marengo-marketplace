@@ -41,7 +41,7 @@ def propose(commit, base):
         run("git","push","origin","HEAD:refs/heads/"+branch,cwd=catalog)
     message=base/"body.md"
     message.write_text(f"Обновление скилла из [коммита источника](https://github.com/{SOURCE}/commit/{commit}).\n"
-                       "Обе поставки собраны из одной версии. Синхронизация рабочих пространств начнётся после слияния.\n")
+                       "Обе поставки собраны из одной версии. После слияния обновите каталог и проверьте версию в клиенте.\n")
     return run("gh","pr","create","--repo",CATALOG,"--base","main","--head",branch,"--title",title,
                "--body-file",str(message),cwd=catalog)
 

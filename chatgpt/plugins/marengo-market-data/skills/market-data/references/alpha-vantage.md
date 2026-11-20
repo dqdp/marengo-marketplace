@@ -7,16 +7,6 @@ routing and the shared options model; this file holds the AV-specific detail.
 
 Asset-class coverage verified live 2026-06-29 (real data on the current key).
 
-## Key tier & limits
-
-Free keys = **25 requests/day · 5/minute**. The skill's dashboard scripts fan out
-CONCURRENT calls — `fundamentals.py` 8–9 per run, `portfolio.py` N+2 (one adjusted
-series per holding + benchmark + risk-free) — so they effectively need a **premium
-key**. On a free key expect the scripts' throttle error naming exactly these limits
-("free tier = 25 req/day · 5/min"), not silent partial data. Realtime options
-additionally need the premium options entitlement (the sample-payload tell in
-Branch B below).
-
 ## Interface
 
 Alpha Vantage MCP exposes each function as its OWN directly-callable tool —
@@ -34,24 +24,9 @@ script in this skill, and not a fallback for Databento tasks.
   never report it as a valid quote. Confirm odd tickers with `SYMBOL_SEARCH`.
 - **`VWAP` is intraday-only.** `interval=daily|weekly|monthly` silently returns
   `{}`. Use `1min/5min/15min/30min/60min`.
-- **`REALTIME_OPTIONS` supports `expiration=YYYY-MM-DD`** (verified live 2026-07-04:
-  SPCX full chain 3,806 rows / 181 KB wire vs one series 180 rows / 9.4 KB — ~19x). The
-  scripts push a known `--expiry` down to the API; only the DISCOVERY call (no expiry yet,
-  or `--list-expiries`) pulls the full chain.
 - **`SYMBOL_SEARCH` top match may be a foreign listing.** "tesla" returns
-  `0R0X.LON` (matchScore 1.0) ABOVE `TSLA` (0.889). Resolve names to the **US
-  primary ticker**: filter `region=United States` / pick the plain US ticker —
-  never take match #1 blindly.
-- **Ticker strings are not globally unique.** The 2026-07-04 `LISTING_STATUS` sweep
-  (`docs/collision-audit-2026-07-04.md`) found 23 futures roots and 35 MOEX tickers
-  colliding with live US listings (`ZM`=Zoom≠Soybean Meal, `ROST`=Ross Stores≠Росинтер,
-  `SIBN`=SI-BONE≠Газпромнефть, `FLOT`=iShares ETF≠Совкомфлот…). A valid-looking AV
-  response proves the string exists on a US exchange — NOT that it is the user's
-  instrument. Classify first (SKILL.md ladder).
-- **`OVERVIEW` (REST) = `COMPANY_OVERVIEW` (MCP tool).** Same endpoint, two names:
-  the REST function name is `OVERVIEW` (what `fundamentals.py` calls over HTTP);
-  the MCP server exposes it as the `COMPANY_OVERVIEW` tool. Don't hunt for a REST
-  `COMPANY_OVERVIEW` — it doesn't exist.
+  `0R0X.LON` (matchScore 1.0) ABOVE `TSLA` (0.889). For the US primary, filter
+  `region=United States` / pick the plain US ticker — don't blindly take match #1.
 - **`CORRELATION`/`COVARIANCE` need ≥2 symbols.** One symbol returns a trivial
   `[[1]]` with no error — pass the full basket.
 - **`DIVIDENDS` amounts are as-paid, NOT split-adjusted** (pre-split AAPL rows show
@@ -98,10 +73,8 @@ Simpler and richer than Databento futures options: AV returns greeks/IV natively
 - No `entitlement` param — plan-gated. AV IS the greeks/IV source for equity
   options (Databento gives none).
 - Coverage = equities + ETFs (incl. daily expiries + LEAPS — verified SPY to 2028).
-  Cash-index options are NOT available here: `options.py` refuses them and names the
-  proxy where one is defensible (`SPX→SPY`, `NDX→QQQ`, `RUT→IWM`, `DJX→DIA`; confirm
-  the proxy with the user). `VIX` has no clean spot-ETF proxy because VIX options price
-  off VIX futures.
+  Cash-index options (SPX/NDX/VIX) NOT available → use ETF proxies (SPY≈S&P,
+  QQQ≈Nasdaq-100, IWM≈Russell-2000).
 - Live during US options RTH 09:30-16:00 ET; outside RTH = last session. The `date`
   field shows the session; no intraday tick timestamp — cross-check the underlying
   quote if second-level freshness matters.
@@ -116,13 +89,9 @@ Branch B steps (use the fewest calls — see the router's "fewest calls" rule):
 1. ONE call answers ATM / moneyness / N-delta: `REALTIME_OPTIONS` with `symbol`,
    `expiration=YYYY-MM-DD`, `require_greeks=true`. The response carries strikes and
    native `delta` for every contract, so read moneyness and N-delta straight from
-   it — no separate center call. For MCP/tool calls, pass `expiration` (and/or
-   `contract`) because full chains are too large to read inline. For the local CLI,
-   `<python> "<skill-dir>/scripts/options.py" SYMBOL --list-expiries` deliberately calls
-<python> "<skill-dir>/scripts/options.py" <SYM> --term        # CROSS-expiration: term curve + IV surface + series table
-   # from the SAME single REALTIME_OPTIONS payload (every expiration arrives anyway) — zero extra calls
-   `REALTIME_OPTIONS` without `expiration`, lists the expirations from that full-chain
-   response, and exits before rendering a dashboard.
+   it — no separate center call. ALWAYS pass `expiration` (and/or `contract`) —
+   full chains are hundreds of thousands of tokens. List expirations cheaply with
+   `REALTIME_PUT_CALL_RATIO {symbol}` (also confirms options coverage).
    - Liquid-underlying caveat (verified: SPY single expiry = ~670 rows / ~100KB):
      even ONE expiration can exceed the tool-output token limit and get spilled to a
      file. Don't try to read the whole response inline. Narrow further — pass
