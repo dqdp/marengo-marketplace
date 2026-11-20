@@ -5,11 +5,14 @@ import argparse, csv, datetime as dt, io, math, os, pathlib, re, shutil, subproc
 from decimal import Decimal
 
 UP, DN, MA, AX, GR = "#1D9E75", "#E24B4A", "#378ADD", "#888888", "rgba(128,128,128,0.18)"
+MONTHS = {"1mo", "mo", "1month", "month", "1mon"}
+
+
 def interval_minutes(s: str) -> int:
     s = s.strip().lower()
     if s in ("1w", "w", "week", "1week"):
         return 7 * 1440
-    if s in ("1mo", "mo", "1month", "month", "1mon"):
+    if s in MONTHS:
         return 30 * 1440  # bucketed as a calendar month in resample()
     if s.endswith("h"):
         return int(float(s[:-1]) * 60)
@@ -22,10 +25,10 @@ def interval_minutes(s: str) -> int:
 
 # ---- resample + render ----
 
-def resample(bars, target_min, cutoff):
+def resample(bars, target_min, cutoff, *, calendar_month=False):
     bars = [b for b in bars if b[0] >= cutoff]
     midnight = lambda ts: ts.replace(hour=0, minute=0, second=0, microsecond=0)
-    if target_min == 30 * 1440:        # monthly
+    if calendar_month:
         keyfn, label_fmt = (lambda ts: midnight(ts).replace(day=1)), "%Y-%m"
     elif target_min == 7 * 1440:       # weekly (bucket to that week's Monday)
         keyfn, label_fmt = (lambda ts: midnight(ts) - dt.timedelta(days=ts.weekday())), "%Y-%m-%d"
@@ -265,7 +268,7 @@ def main(argv=None):
     except (ValueError, OverflowError):
         ap.error("invalid chart interval")
     bars, base = fetch_file(a.from_path, a.from_format)
-    D = resample(bars, minutes, dt.datetime.min)
+    D = resample(bars, minutes, dt.datetime.min, calendar_month=a.interval.strip().lower() in MONTHS)
     src = a.source_label or f"local file ({base})"
     subtitle = f"{src} · {len(D)} bars · {D[0][0]} -> {D[-1][0]}"
     title = f"{a.symbol} · {a.interval}"

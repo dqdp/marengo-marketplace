@@ -1,7 +1,7 @@
 ---
 name: market-data
 description: Поиск инструментов, текущие котировки, лучшие bid/ask, исторические свечи и простые ценовые графики через Marengo Databento, БКС и Alpha Vantage.
-version: 1.169.1
+version: 1.169.2
 ---
 
 # Рыночные данные и ценовые графики
@@ -10,7 +10,7 @@ version: 1.169.1
 
 ## Фьючерсы и опционы CME
 
-В Marengo открой marengo_platform_catalog и marengo_platform_describe. Для поиска по названию продукта, дате экспирации, типу опциона и страйку используй marengo_databento_instruments_search. Для списка контрактов семейства и параметров инструмента используй marengo_databento_instruments_list. Перелистывай сохранённые результаты по возвращённому курсору. Сохраняй биржу, символ, ID, единицу контракта, шаг цены и экспирацию.
+В Marengo открой marengo_platform_catalog и marengo_platform_describe. Для поиска по названию продукта, дате экспирации, типу опциона и страйку используй marengo_databento_instruments_search. Для списка контрактов семейства и параметров инструмента используй marengo_databento_instruments_list. Перелистывай сохранённые результаты по возвращённому курсору. При provider_limit_reached пустая выдача может быть неполной. Для поиска по частям следуй narrower_windows и инструкции ответа по сведению исходных A/M/D перед выбором nearest. При подтверждении расходов повторяй с возвращёнными retry_arguments. Сохраняй биржу, символ, ID, единицу контракта, шаг цены и экспирацию.
 
 Для разовой котировки используй marengo_databento_live_get_futures_quote. При выборе по ID передай ID строкой и stype_in=instrument_id. Для потока лучших bid/ask используй marengo_databento_live_stream_bba по его текущей схеме: start, последовательные read по next_cursor, затем stop для того же stream_id. Укажи пропуски missed_events. Пустое чтение при закрытом рынке не даёт новой котировки.
 

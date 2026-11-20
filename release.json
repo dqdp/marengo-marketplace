@@ -1,21 +1,21 @@
 {
-  "version": "1.169.1",
+  "version": "1.169.2",
   "source": "dqdp/market_data_skill",
-  "commit": "e017d9afc972fef887db4ff7ad615dfc310ef4b1",
+  "commit": "6cd5ad7ff68acd2ee360fd413a1384e274cbe2ee",
   "edition": "editions/price-charts",
   "sha256": {
     ".agents/plugins/marketplace.json": "865cff996ef54c608b0f868c0b1bd021aca2ac319baacc186968148c45836b18",
-    ".claude-plugin/marketplace.json": "0964fa84d3213e174a3b2ee2807a54e40c2d2c01d9c2caabc721014835998609",
+    ".claude-plugin/marketplace.json": "470326e7401b30d82c1d7541682cf9d38ea7008cb9f4867a6d15ed12e87e31e8",
     "chatgpt/.agents/plugins/marketplace.json": "70502e2036e2442b10446540ed496923faf6e9ce665fb7074682bde6ecc6cd6c",
-    "chatgpt/plugins/marengo-market-data/.codex-plugin/plugin.json": "5904421cfcabc7bf04b675728cd84e9d0237fe931b461e62e17e344000e73757",
-    "chatgpt/plugins/marengo-market-data/skills/market-data/SKILL.md": "9ab497be4985d7b3aa534b29eed83ceb7652dcb80520ef8cdacf45a4caa75d36",
+    "chatgpt/plugins/marengo-market-data/.codex-plugin/plugin.json": "aeb9ab9d5ba021aa5319b332d0504951cac252ddb7516a88c19207e3749f9bce",
+    "chatgpt/plugins/marengo-market-data/skills/market-data/SKILL.md": "7cd69129f6eae8e6d5e2abec175fa49665741d80e3b3e02d41144f8a09b55547",
     "chatgpt/plugins/marengo-market-data/skills/market-data/references/alpha-vantage.md": "979a75b19d07cceef43c8e107d0848537ad83ed5347d76dc9ad465d6e07b3f35",
-    "chatgpt/plugins/marengo-market-data/skills/market-data/scripts/chart.py": "7ee767314fe431f21db86f80a8aeaa3b767db87f78cb354daf07bd3c26aa65eb",
+    "chatgpt/plugins/marengo-market-data/skills/market-data/scripts/chart.py": "aaf7c51e138ce69b7d80fbd3168ee47651a123ba6aa875983b1b531398b600d7",
     "chatgpt/plugins/marengo-market-data/skills/market-data/scripts/greeks.py": "93d313cf5872a0da1540e5a44d1ec28ef91fcf0cdd5bbc53fc9f9133b309071f",
-    "plugins/marengo-market-data/.claude-plugin/plugin.json": "f69fa49e916cfbb548f6720ecff0bef62b6671c366e1c0913e22a2e51c96b5a3",
-    "plugins/marengo-market-data/skills/market-data/SKILL.md": "9ab497be4985d7b3aa534b29eed83ceb7652dcb80520ef8cdacf45a4caa75d36",
+    "plugins/marengo-market-data/.claude-plugin/plugin.json": "9627406190aadf213ccaefc080d5e90e760dce7981931b01dedfd1787ce82f72",
+    "plugins/marengo-market-data/skills/market-data/SKILL.md": "7cd69129f6eae8e6d5e2abec175fa49665741d80e3b3e02d41144f8a09b55547",
     "plugins/marengo-market-data/skills/market-data/references/alpha-vantage.md": "979a75b19d07cceef43c8e107d0848537ad83ed5347d76dc9ad465d6e07b3f35",
-    "plugins/marengo-market-data/skills/market-data/scripts/chart.py": "7ee767314fe431f21db86f80a8aeaa3b767db87f78cb354daf07bd3c26aa65eb",
+    "plugins/marengo-market-data/skills/market-data/scripts/chart.py": "aaf7c51e138ce69b7d80fbd3168ee47651a123ba6aa875983b1b531398b600d7",
     "plugins/marengo-market-data/skills/market-data/scripts/greeks.py": "93d313cf5872a0da1540e5a44d1ec28ef91fcf0cdd5bbc53fc9f9133b309071f"
   }
 }

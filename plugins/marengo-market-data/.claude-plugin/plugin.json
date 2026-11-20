@@ -1,7 +1,7 @@
 {
   "name": "marengo-market-data",
   "description": "Market Data Skill для Marengo, БКС, Alpha Vantage и MOEX ISS.",
-  "version": "1.169.1",
+  "version": "1.169.2",
   "author": {
     "name": "Marengo"
   }
