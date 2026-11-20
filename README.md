@@ -8,9 +8,25 @@
 
 Пользователю личного аккаунта нужен доступ на чтение приватного каталога `dqdp/marengo-marketplace`. Каталог содержит файлы скилла, поэтому отдельный доступ к репозиторию разработки для установки не требуется.
 
-**ChatGPT Work на компьютере.** На машине пользователя с настроенным GitHub SSH и Codex CLI добавьте каталог командой `codex plugin marketplace add git@github.com:dqdp/marengo-marketplace.git --ref main`. Перезапустите настольный ChatGPT, откройте каталог плагинов в режиме Work, выберите Marengo и установите Marengo Market Data. Обновить локальную копию каталога можно командой `codex plugin marketplace upgrade marengo`. Перезапустите приложение и проверьте версию установленного плагина. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
+**ChatGPT Work на компьютере.** Добавьте приватный каталог под пользователем настольного ChatGPT. Команды для новой установки и уже настроенного каталога приведены в разделе [Windows и Linux](#настольный-chatgpt-work-на-windows-и-linux).
 
 **Claude Cowork.** В разделе Customize → Plugins выберите Add marketplace → Add from a repository, укажите `dqdp/marengo-marketplace` и установите Marengo Market Data. Для приватного каталога подтвердите доступ к GitHub. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+
+### Настольный ChatGPT Work на Windows и Linux
+
+Каталог устанавливается под пользователем ОС, который запускает ChatGPT. На Windows откройте обычный PowerShell на этом компьютере. Понадобятся Git, Codex CLI с командой `plugin marketplace` и доступ на чтение приватного репозитория. На Linux используйте терминал того же пользователя. При первом обращении по HTTPS Git может предложить вход в GitHub. Если уже используется SSH-доступ, сохраните прежний SSH-адрес источника.
+
+Пока облегчённая версия 1.169.2 проходит через [PR каталога](https://github.com/dqdp/marengo-marketplace/pull/1), первая установка из её ветки выполняется так:
+
+```powershell
+codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref docs/personal-install-light-skill
+codex plugin add marengo-market-data@marengo
+codex plugin list --marketplace marengo --json
+```
+
+Если каталог `marengo` уже добавлен, сначала выполните `codex plugin list --marketplace marengo --available --json`. Если доступна нужная версия, выполните только установку плагина. Если каталог указывает на тот же репозиторий, отслеживает другую ветку и список `installed` пуст, удалите его регистрацию командой `codex plugin marketplace remove marengo` и повторите установку с нужной веткой. После публикации нужной версии в `main` используйте `--ref main` для новых устройств. Команда `codex plugin marketplace upgrade marengo` обновляет уже выбранную ветку.
+
+Полностью закройте и откройте настольный ChatGPT. В режиме **Work** откройте **Plugins**, выберите каталог **Marengo** и карточку **Marengo Market Data**. В новом чате попросите: «Используй Market Data и получи лучший bid и ask ES через Marengo. Покажи время котировки». Если Work предлагает подключить источник, пройдите первый вход для Marengo в этом клиенте. Windows CI отдельно проверяет файлы, график на синтетических данных и установку через нативный CLI. Для проверки интерфейса и OAuth нужен запуск настольного Work под пользователем. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
 
 При переходе с ручного ZIP проверьте версию плагина в новой сессии и отключите прежний вручную добавленный market-data. Если ZIP распаковывали в личную папку skills, перенесите старую папку market-data за пределы каталогов обнаружения. Проверьте, что в новой сессии видна одна редакция.
 

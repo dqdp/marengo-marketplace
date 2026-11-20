@@ -10,11 +10,11 @@ class ReleaseTests(unittest.TestCase):
         for prefix, manifest, catalog in (("",".claude-plugin",".claude-plugin/marketplace.json"),
                                          ("chatgpt",".codex-plugin",".agents/plugins/marketplace.json")):
             base = ROOT/prefix
-            entry, = json.loads((base/catalog).read_text())["plugins"]
+            entry, = json.loads((base/catalog).read_text(encoding="utf-8"))["plugins"]
             source = entry["source"] if prefix == "" else entry["source"]["path"]
             plugin = base/source
             self.assertEqual(plugin.name, NAME)
-            self.assertEqual(json.loads((plugin/manifest/"plugin.json").read_text())["version"],lock["version"])
+            self.assertEqual(json.loads((plugin/manifest/"plugin.json").read_text(encoding="utf-8"))["version"],lock["version"])
             skill = plugin/"skills/market-data"
             copies.append((skill/"SKILL.md").read_bytes())
             self.assertEqual({p.relative_to(skill).as_posix() for p in skill.rglob("*") if p.is_file()}, set(PAYLOAD))

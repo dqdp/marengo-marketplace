@@ -1,0 +1,5 @@
+# Preserve the release.json hashes in Windows checkouts with core.autocrlf enabled.
+.agents/** text eol=lf
+.claude-plugin/** text eol=lf
+chatgpt/** text eol=lf
+plugins/** text eol=lf
