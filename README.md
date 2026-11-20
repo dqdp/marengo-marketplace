@@ -2,7 +2,7 @@
 
 Публичный каталог скилла для ChatGPT Work и Claude Cowork. Обе поставки собираются из одного коммита приватного Market Data Skill. Версия, исходный коммит и контрольные суммы файлов хранятся в [release.json](release.json).
 
-[Полная инструкция для Windows](docs/WINDOWS_SETUP.md) описывает установку MCP и скилла в обоих клиентах, подключение БКС и Alpha Vantage, проверку котировок и переход со старых локальных коннекторов.
+[Полная инструкция для Windows](docs/WINDOWS_SETUP.md) содержит шаги установки из облака, параметры OAuth и справочник коннектора. В Work откройте существующий Marengo Data или создайте личный плагин через Plugin Creator по [публичной конфигурации Marengo Data](connectors/marengo-data). В Claude Cowork добавьте Marengo по HTTPS. Отдельный скилл оба приложения получают из этого каталога.
 
 [Скачать инструкцию отдельным документом Word](docs/Marengo-Windows-Setup-1.169.2.docx?raw=true)
 
