@@ -2,6 +2,8 @@
 
 Приватный каталог скилла для ChatGPT Work и Claude Cowork. Обе поставки собираются из одного коммита приватного Market Data Skill. Версия, исходный коммит и контрольные суммы файлов хранятся в [release.json](release.json).
 
+[Полная инструкция для Windows](docs/WINDOWS_SETUP.md) описывает установку MCP и скилла в обоих клиентах, подключение БКС и Alpha Vantage, проверку котировок и переход со старых локальных коннекторов.
+
 ## Первое подключение
 
 Клиентская редакция с обычными ценовыми графиками находится в `editions/price-charts` приватного `dqdp/market_data_skill`. Основа графиков и расчёта греков — версия 1.36.0, коммит `753c19b`. Номер поставки 1.169.2 позволяет обновить полную версию 1.168.0. Каталог включает только маршрутизатор, справочник Alpha Vantage, построение ценового SVG и расчёт греков.
@@ -10,7 +12,7 @@
 
 **ChatGPT Work на компьютере.** Добавьте приватный каталог под пользователем настольного ChatGPT. Команды для новой установки и уже настроенного каталога приведены в разделе [Windows и Linux](#настольный-chatgpt-work-на-windows-и-linux).
 
-**Claude Cowork.** В разделе Customize → Plugins выберите Add marketplace → Add from a repository, укажите `dqdp/marengo-marketplace` и установите Marengo Market Data. Для приватного каталога подтвердите доступ к GitHub. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
+**Claude Cowork.** Пока 1.169.2 находится в ветке PR, загрузите ZIP облегчённого скилла по разделу 5 инструкции. После публикации нужной версии в `main` в разделе Customize → Plugins выберите Add marketplace → Add from a repository, укажите `dqdp/marengo-marketplace` и установите Marengo Market Data. Для приватного каталога подтвердите доступ к GitHub. [Инструкция Anthropic](https://support.claude.com/en/articles/13837440-use-plugins-in-claude)
 
 ### Настольный ChatGPT Work на Windows и Linux
 
