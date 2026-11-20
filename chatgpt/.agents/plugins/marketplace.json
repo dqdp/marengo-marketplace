@@ -1,0 +1,20 @@
+{
+  "name": "marengo",
+  "interface": {
+    "displayName": "Marengo"
+  },
+  "plugins": [
+    {
+      "name": "marengo-market-data",
+      "source": {
+        "source": "local",
+        "path": "./plugins/marengo-market-data"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

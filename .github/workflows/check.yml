@@ -1,0 +1,27 @@
+name: Verify catalog
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: python3 tools/release.py
+      - run: python3 -m unittest discover -s tools -p 'test_*.py'
+      - name: Verify release version on pull requests
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          old = json.loads(subprocess.check_output(['git','show',os.environ['BASE_SHA']+':release.json']))
+          new = json.loads(Path('release.json').read_text())
+          if new != old and tuple(map(int,new['version'].split('.'))) <= tuple(map(int,old['version'].split('.'))):
+              raise SystemExit('Bump the source skill version before publishing an update')
+          PY

@@ -1,0 +1,15 @@
+{
+  "name": "marengo-market-data",
+  "description": "Market Data Skill для Marengo, БКС, Alpha Vantage и MOEX ISS.",
+  "version": "1.168.0",
+  "author": {
+    "name": "Marengo"
+  },
+  "skills": "./skills",
+  "interface": {
+    "displayName": "Marengo Market Data",
+    "shortDescription": "Market Data Skill для Marengo, БКС, Alpha Vantage и MOEX ISS.",
+    "developerName": "Marengo",
+    "category": "Productivity"
+  }
+}

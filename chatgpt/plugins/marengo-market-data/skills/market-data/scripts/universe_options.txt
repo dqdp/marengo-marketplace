@@ -1,0 +1,192 @@
+# Seed hot-list for `options.py --prewarm` — liquid, deeply-optioned US names.
+# One ticker per line; '#' comments and blank lines ignored. The prewarm universe is this
+# file UNION the lazily-accreted tickers (any name ever run through --history joins it).
+# Dead / non-optionable tickers are auto-pruned from the accreted set on the first empty pull.
+# Curated, not exhaustive — the wide ~1000 universe is Phase 3 (the screener).
+
+# Index / broad ETFs
+SPY
+QQQ
+IWM
+DIA
+# Mega-cap tech
+AAPL
+MSFT
+NVDA
+AMZN
+GOOGL
+META
+TSLA
+AMD
+NFLX
+AVGO
+# Payments / semis / growth
+V
+MA
+INTC
+MU
+PLTR
+COIN
+SMCI
+# Banks
+JPM
+BAC
+WFC
+GS
+# Energy
+XOM
+CVX
+# Health
+JNJ
+UNH
+LLY
+# Consumer / retail
+WMT
+COST
+HD
+DIS
+# Industrials
+BA
+CAT
+# ADR
+BABA
+# Sector / commodity / bond ETFs
+GLD
+SLV
+TLT
+HYG
+XLF
+XLE
+
+# Crypto ETFs (v1.85 universe expansion; probed 2026-07-13 — all carry real chains)
+IBIT
+FBTC
+ETHA
+BITO
+GBTC
+ARKB
+BITB
+# Sector SPDRs (completing the set; XLE/XLF/XLK are above)
+XLC
+XLI
+XLP
+XLU
+XLV
+XLY
+XLB
+XLRE
+# Thematic / industry / commodity / bond / international baskets
+SMH
+SOXX
+XBI
+IBB
+KRE
+ARKK
+GDX
+GDXJ
+USO
+UNG
+EEM
+EFA
+FXI
+EWZ
+LQD
+EMB
+VNQ
+JETS
+
+# Vol ETPs + leveraged index/semis/single-stock (v1.88.4 expansion — the most actively
+# optioned ETF classes that were missing from the seed)
+VXX
+UVXY
+SVXY
+TQQQ
+SQQQ
+SOXL
+SOXS
+UPRO
+SPXU
+TSLL
+NVDL
+
+# Sector/thematic gaps (energy services, metals/uranium, real estate, retail/homebuilders,
+# solar, defense, copper)
+XOP
+OIH
+XME
+URA
+URNM
+IYR
+XRT
+XHB
+ITB
+TAN
+ITA
+COPX
+
+# International (China tech, Japan, India, Korea, Taiwan)
+KWEB
+EWJ
+INDA
+EWY
+EWT
+
+# Bonds (adding to TLT/HYG/LQD/EMB)
+IEF
+TMF
+
+# Cross-asset sweep (v1.89.3 — user 2026-07-14 "а как же золото/другие комодитис?";
+# every name probed live: full chain + 100% IV coverage on 2026-07-13)
+# Gold/miners/steel + silver miners
+IAU
+NUGT
+JNUG
+SIL
+SLX
+# Broad commodity + agriculture
+DBC
+PDBC
+DBA
+# FX
+UUP
+FXE
+FXY
+# International (Mexico, UK, Germany, China-A, Canada, Poland)
+EWW
+EWU
+EWG
+ASHR
+EWC
+EPOL
+# Broad US (equal-weight + total market)
+RSP
+VTI
+# Thematic (lithium, clean energy, big banks)
+LIT
+ICLN
+KBE
+# Rates/credit
+TBT
+JNK
+# Crypto: Solana ETFs (SYMBOL_SEARCH + chain probe 2026-07-14)
+SOLZ
+BSOL
+GSOL
+
+# Crypto beyond BTC/SOL: the ETH fund family + the XRP trusts (chains probed live 2026-07-14;
+# GXRP/XRPZ are too new for ETF_PROFILE — identity via SYMBOL_SEARCH trust shares + real chains)
+ETHE
+FETH
+ETHW
+ETHV
+EZET
+GXRP
+XRPZ
+
+# Vice / sin baskets (user 2026-07-14): cannabis, betting/iGaming, esports; BJK probed DEAD
+VICE
+BETZ
+MSOS
+MJ
+YOLO
+NERD
