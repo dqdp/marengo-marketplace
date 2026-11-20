@@ -1,0 +1,20 @@
+{
+  "interface": {
+    "capabilities": [],
+    "developerName": "Alex",
+    "displayName": "Marengo Data",
+    "longDescription": "Подключает ChatGPT к данным и инструментам Marengo через защищённый интерфейс. Сервис предназначен для внутреннего использования. Доступ предоставляет администратор.",
+    "shortDescription": "Данные и инструменты Marengo",
+    "category": "Other",
+    "defaultPrompt": null
+  },
+  "name": "marengo-data",
+  "version": "0.1.4",
+  "description": "Внутренний доступ к данным и инструментам Marengo.",
+  "author": {
+    "name": "Alex"
+  },
+  "keywords": [],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

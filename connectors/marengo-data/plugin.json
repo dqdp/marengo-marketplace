@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "author": {
+    "name": "Alex"
+  },
+  "description": "Внутренний доступ к данным и инструментам Marengo.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "capabilities": [],
+        "developerName": "Alex",
+        "displayName": "Marengo Data",
+        "longDescription": "Подключает ChatGPT к данным и инструментам Marengo через защищённый интерфейс. Сервис предназначен для внутреннего использования. Доступ предоставляет администратор.",
+        "shortDescription": "Данные и инструменты Marengo"
+      }
+    }
+  },
+  "name": "marengo-data",
+  "version": "0.1.4"
+}

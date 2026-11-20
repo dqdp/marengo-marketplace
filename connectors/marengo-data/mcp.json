@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "marengo": {
+      "type": "streamable-http",
+      "url": "https://mcp.marengo.net/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "provided",
+              "clientId": "wokckr7tswq8b1xeuodil",
+              "tokenEndpointAuthMethod": "none"
+            },
+            "resource": "https://mcp.marengo.net/mcp",
+            "baseScopes": [
+              "data:read",
+              "data:write",
+              "offline_access"
+            ],
+            "defaultScopes": [],
+            "oidcEnabled": false
+          }
+        }
+      }
+    }
+  }
+}
