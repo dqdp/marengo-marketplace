@@ -128,23 +128,13 @@ def black76(F, K, T, sigma, r=0.0, is_call=True) -> Greeks:
 
 
 def implied_vol(price, K, T, *, F=None, S=None, r=0.0, q=0.0, is_call=True,
-                model="b76", tol=1e-8, max_iter=100, guess=None, return_iters=False):
+                model="b76", tol=1e-8, max_iter=100):
     """
     Solve implied vol from a market price. Newton step with bisection fallback,
     bracketed on [1e-6, 5.0]. Returns sigma (decimal) or None if no solution
     (e.g. price below intrinsic).
-
-    Warm start: pass `guess` (e.g. the previous tick's IV) to seed the solver instead of
-    the cold 0.2 — it converges in fewer Newton steps, which is what makes a per-tick
-    re-solve cheap on a live chain. An out-of-bracket guess is ignored (falls back to 0.2).
-    With `return_iters=True` returns `(sigma, n_iterations)` (the no-solution / above-bound
-    short-circuits return `(None, 0)` / `(hi, 0)`) so the live backend can profile and cap
-    `max_iter` low.
     """
     lo, hi = 1e-6, 5.0
-
-    def _ret(sig, n):
-        return (sig, n) if return_iters else sig
 
     def price_at(sig):
         if model == "bs":
@@ -153,17 +143,17 @@ def implied_vol(price, K, T, *, F=None, S=None, r=0.0, q=0.0, is_call=True,
 
     # No-arbitrage bounds check.
     if price <= price_at(lo):
-        return _ret(None, 0)
+        return None
     if price >= price_at(hi):
-        return _ret(hi, 0)
+        return hi
 
-    sig = guess if (guess is not None and lo < guess < hi) else 0.2
-    for i in range(1, max_iter + 1):
+    sig = 0.2
+    for _ in range(max_iter):
         g = (black_scholes(S, K, T, sig, r=r, q=q, is_call=is_call) if model == "bs"
              else black76(F, K, T, sig, r=r, is_call=is_call))
         diff = g.price - price
         if abs(diff) < tol:
-            return _ret(sig, i)
+            return sig
         vega = g.vega if g.vega > 1e-12 else 1e-12
         step = diff / vega
         new = sig - step
@@ -179,7 +169,7 @@ def implied_vol(price, K, T, *, F=None, S=None, r=0.0, q=0.0, is_call=True,
             else:
                 lo = sig
         sig = new
-    return _ret(sig, max_iter)
+    return sig
 
 
 def forward_from_parity(call_price, put_price, K, T, r=0.0):
@@ -217,26 +207,12 @@ def strike_for_delta(target_delta, T, sigma, *, F=None, S=None, r=0.0, q=0.0,
 # CLI
 # --------------------------------------------------------------------------- #
 def _add_common(p):
-    def _positive_float(s):
-        v = float(s)
-        if not math.isfinite(v) or v <= 0:
-            raise argparse.ArgumentTypeError("must be positive")
-        return v
-
-    def _positive_int(s):
-        v = int(s)
-        if v <= 0:
-            raise argparse.ArgumentTypeError("must be a positive integer")
-        return v
-
     p.add_argument("--model", choices=["bs", "b76"], default="b76")
     p.add_argument("--type", dest="kind", choices=["call", "put"], default="call")
     p.add_argument("--F", type=float, help="future/forward price (b76)")
     p.add_argument("--S", type=float, help="spot price (bs)")
     p.add_argument("--K", type=float)
-    p.add_argument("--T", type=_positive_float, help="time to expiry in YEARS (or use --dte)")
-    p.add_argument("--dte", type=_positive_int, help="days to expiry (= --T dte/365) — the safe alternative when "
-                                                     "you have a day count; mutually exclusive with --T")
+    p.add_argument("--T", type=float, help="time to expiry in years")
     p.add_argument("--r", type=float, default=0.0)
     p.add_argument("--q", type=float, default=0.0, help="dividend/carry yield (bs)")
 
@@ -259,17 +235,6 @@ def main(argv=None):
     ps.add_argument("--target-delta", type=float, required=True)
 
     a = ap.parse_args(argv)
-    if a.T is not None and a.dte is not None:
-        ap.error("--T and --dte are mutually exclusive (years vs days for the same thing)")
-    if a.T is None:
-        if a.dte is None:
-            ap.error("need --T YEARS or --dte DAYS")
-        a.T = a.dte / 365.0
-    # v1.126: model/underlier mismatch died with a raw TypeError from _d1_d2 — argparse-loud instead
-    if getattr(a, "model", None) == "b76" and getattr(a, "F", None) is None:
-        ap.error("--model b76 needs --F (the futures/forward price)")
-    if getattr(a, "model", None) == "bs" and getattr(a, "S", None) is None:
-        ap.error("--model bs needs --S (the spot price)")
     is_call = a.kind == "call"
 
     if a.cmd == "price":

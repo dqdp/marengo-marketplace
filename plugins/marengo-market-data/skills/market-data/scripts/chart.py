@@ -21,7 +21,7 @@ Examples:
   python3 chart.py ES.v.0 --source databento --interval 4h --days 14 --stype continuous --open
 """
 from __future__ import annotations
-import argparse, base64, csv, datetime as dt, gzip as _gzip, http.client, io, math, os, pathlib, re, shutil, socket, subprocess, sys, time, urllib.parse, urllib.request, urllib.error, webbrowser
+import argparse, base64, csv, datetime as dt, io, os, pathlib, re, shutil, subprocess, sys, urllib.parse, urllib.request, webbrowser
 
 UP, DN, MA, AX, GR = "#1D9E75", "#E24B4A", "#378ADD", "#888888", "rgba(128,128,128,0.18)"
 PRICE_SCALE = 1e9  # Databento ohlcv prices are 1e9-scaled integers
@@ -36,7 +36,7 @@ def get_key(name: str, env_file: str | None) -> str:
     for path in ([env_file] if env_file else []) + [
             ".env", os.path.join(here, ".env"), os.path.join(here, os.pardir, ".env")]:
         if path and os.path.exists(path):
-            for line in open(path, encoding="utf-8"):  # explicit: Windows' cp1252 default mojibakes UTF-8 .env
+            for line in open(path):
                 line = line.strip()
                 if line.startswith(name + "="):
                     return line.split("=", 1)[1].strip().strip('"').strip("'")
@@ -44,58 +44,10 @@ def get_key(name: str, env_file: str | None) -> str:
              f"file (KEY=value lines) in the skill folder next to SKILL.md, or pass --env-file.")
 
 
-def _env_num(name: str, default, cast):
-    try:
-        return cast(os.environ[name])
-    except (KeyError, ValueError):
-        return default
-
-
-def http_get(url: str, headers: dict | None = None,
-             timeout: float | None = None, retries: int | None = None, gzip: bool = False) -> str:
-    """GET the URL as text. TRANSIENT failures — a read timeout, a dropped connection, or an HTTP 5xx —
-    are retried with exponential backoff: a Databento parent-definition/statistics pull is high-variance
-    (verified 2026-07-15: the same OH.OPT listing timed out once at 60s, then returned), and a single
-    read timeout used to kill a whole --term / --list-expiries run. A 4xx is a CLIENT error (bad symbol,
-    422 past-frontier, 401 auth) — retrying can't help, so it raises at once. Tunable via env:
-    MARKET_DATA_HTTP_TIMEOUT (seconds, default 60) · MARKET_DATA_HTTP_RETRIES (extra attempts, default 2).
-    `gzip=True` (v1.114, opt-in — existing callers unchanged) advertises Accept-Encoding: gzip and
-    transparently decodes: the futhist statistics pulls are the skill's biggest payloads (probe
-    2026-07-16: LO.OPT one MONTH = 918MB raw) and a plain-text stream of that class ran >7 min live."""
-    if timeout is None:
-        timeout = _env_num("MARKET_DATA_HTTP_TIMEOUT", 60.0, float)
-    if retries is None:
-        retries = _env_num("MARKET_DATA_HTTP_RETRIES", 2, int)
-    timeout = max(1.0, timeout)   # a <=0 timeout makes urlopen raise ValueError / fail instantly + burn retries
-    retries = max(0, retries)
-    hdr = dict(headers or {})
-    if gzip:
-        hdr["Accept-Encoding"] = "gzip"
-    req = urllib.request.Request(url, headers=hdr)
-    attempt = 0
-    while True:
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                body = r.read()
-                if gzip and (r.headers.get("Content-Encoding") or "").lower() == "gzip":
-                    body = _gzip.decompress(body)
-                return body.decode("utf-8", "replace")
-        except urllib.error.HTTPError as e:       # HTTPError is a URLError subclass — catch it FIRST
-            if e.code < 500 or attempt >= retries:
-                raise                             # 4xx (client error) never retries; 5xx only up to `retries`
-        except (urllib.error.URLError, TimeoutError, socket.timeout, ConnectionError, http.client.HTTPException,
-                EOFError, _gzip.BadGzipFile):
-            # socket.timeout: the REAL py3.9 mid-body read-timeout shape — NOT a TimeoutError
-            # subclass there (alias unified only in 3.10+); harmless duplicate on 3.10+
-            # http.client.HTTPException covers IncompleteRead — a server dropping a big stream
-            # MID-BODY (live 2026-07-16: a 106MB statistics stream died at the transport layer);
-            # as transient as a dropped connection, but it is neither URLError nor ConnectionError.
-            # EOFError/BadGzipFile = the SAME truncation arriving as a well-framed-but-short gzip
-            # body (decompress dies instead of read; fundamentals.py has caught EOFError since v1.84).
-            if attempt >= retries:
-                raise
-        attempt += 1
-        time.sleep(min(8.0, 1.5 * (2 ** (attempt - 1))))   # 1.5s, 3s, 6s… capped at 8s
+def http_get(url: str, headers: dict | None = None) -> str:
+    req = urllib.request.Request(url, headers=headers or {})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return r.read().decode("utf-8", "replace")
 
 
 def interval_minutes(s: str) -> int:
@@ -157,14 +109,7 @@ def _av(params, env_file):
 
 
 def fetch_av_crypto(symbol, market, target_min, env_file):
-    base = "60min"   # CRYPTO_INTRADAY's coarsest interval — outputsize=full reaches back ~1 month
-    if target_min >= 1440:
-        # v1.126: the old dead conditional ('60min' if … else '60min') silently truncated a
-        # daily/long-window request to ~30 days. Still served (resampled), but DISCLOSED now;
-        # the daily crypto endpoint is a separate un-probed payload shape — not silently guessed.
-        print("warning: av-crypto serves intraday bars only (~1 month back at 60min) — a longer "
-              "window is truncated to that span; use --source databento (futures) or shorten --days",
-              file=sys.stderr)
+    base = "60min" if target_min < 1440 else "60min"
     text = _av({"function": "CRYPTO_INTRADAY", "symbol": symbol, "market": market,
                 "interval": base, "outputsize": "full"}, env_file)
     out = []
@@ -176,14 +121,9 @@ def fetch_av_crypto(symbol, market, target_min, env_file):
     return out, "crypto-60min"
 
 
-def fetch_av_equity(symbol, target_min, env_file, adjusted=False):
-    """Daily default is the RAW series — a split shows as a price cliff (attributed in the subtitle).
-    `adjusted=True` (--adjusted) pulls TIME_SERIES_DAILY_ADJUSTED and rescales the WHOLE bar by
-    adjusted_close/close, so multi-year charts across a split stay continuous. (Kept opt-in: the
-    adjusted endpoint has historically been premium-gated — flipping the default would break free keys.)"""
+def fetch_av_equity(symbol, target_min, env_file):
     if target_min >= 1440:
-        fn = "TIME_SERIES_DAILY_ADJUSTED" if adjusted else "TIME_SERIES_DAILY"
-        text = _av({"function": fn, "symbol": symbol,
+        text = _av({"function": "TIME_SERIES_DAILY", "symbol": symbol,
                     "outputsize": "full", "entitlement": "realtime"}, env_file)
         tcol = "timestamp"
         fmt = "%Y-%m-%d"
@@ -195,11 +135,8 @@ def fetch_av_equity(symbol, target_min, env_file, adjusted=False):
     out = []
     for row in csv.DictReader(io.StringIO(text)):
         ts = dt.datetime.strptime(row[tcol], fmt)
-        o, h, lo, cl = (float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]))
-        if adjusted and row.get("adjusted_close"):
-            f = float(row["adjusted_close"]) / cl if cl else 1.0   # scale the whole bar, not just close
-            o, h, lo, cl = o * f, h * f, lo * f, cl * f
-        out.append((ts, o, h, lo, cl, float(row.get("volume", 0))))
+        out.append((ts, float(row["open"]), float(row["high"]), float(row["low"]),
+                    float(row["close"]), float(row.get("volume", 0))))
     out.sort(key=lambda r: r[0])
     return out, ("equity-1d" if target_min >= 1440 else "equity-60min")
 
@@ -456,10 +393,8 @@ def fetch_file(path, fmt=None):
     plus open,high,low,close (volume optional); JSON accepts a list of objects or
     [ts,o,h,l,c,v] rows (or {"bars"/"data"/"candles"/"values": [...]}). Prices must be
     real numbers already (not Databento 1e9-scaled integers)."""
-    if not os.path.exists(path):
-        sys.exit(f"error: --from file not found: {path}")
     fmt = fmt or ("json" if path.lower().endswith(".json") else "csv")
-    raw = open(path, encoding="utf-8").read()
+    raw = open(path).read()
     out = []
     if fmt == "json":
         import json
@@ -507,50 +442,9 @@ SOURCE_TZ = {  # bar-timestamp timezone per source: (hours east of UTC, label)
 }
 
 
-# --- parse-time validators + ignored-flag warnings (docs/command-layer-plan.md §0.5) ---
-def _arg_interval(s):
-    try:
-        v = interval_minutes(s)
-        if not math.isfinite(v) or v <= 0:
-            raise ValueError
-        return s          # validated, but keep the STRING (the subtitle shows it verbatim)
-    except (ValueError, TypeError):
-        raise argparse.ArgumentTypeError(f"bad interval '{s}' (use e.g. 1h, 4h, 1d, 1w, 1mo)") from None
-
-
-def _arg_posdays(s):
-    v = float(s)
-    if not math.isfinite(v) or v <= 0:
-        raise argparse.ArgumentTypeError("--days must be positive")
-    return v
-
-
-def _warn_ignored(a):
-    """Provider-specific flags on the wrong --source — warn instead of silently swallowing them."""
-    w = []
-    if a.source != "av-crypto" and a.market != "USD":
-        w.append("warning: --market is ignored (av-crypto only)")
-    if a.source != "databento":
-        if a.dataset != "GLBX.MDP3":
-            w.append("warning: --dataset is ignored (databento only)")
-        if a.stype != "continuous":
-            w.append("warning: --stype is ignored (databento only)")
-    if a.source != "moex" and a.moex_market:
-        w.append("warning: --moex-market is ignored (moex only)")
-    if getattr(a, "adjusted", False):
-        try:
-            daily = interval_minutes(a.interval) >= 1440
-        except (ValueError, TypeError):
-            daily = True
-        if a.source != "av-equity" or not daily:
-            w.append("warning: --adjusted applies to av-equity DAILY charts only")
-    return w
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Fetch a market series and render it to SVG")
-    ap.add_argument("symbol", help="per-source format: av-equity ticker (AAPL) · av-crypto bare asset "
-                                   "(BTC, with --market) · databento continuous (ES.v.0) · MOEX secid")
+    ap.add_argument("symbol")
     ap.add_argument("--source", choices=["databento", "av-crypto", "av-equity", "moex", "file"])
     ap.add_argument("--from", dest="from_path",
                     help="render from a local OHLCV file (CSV or JSON) instead of fetching — "
@@ -558,12 +452,9 @@ def main(argv=None):
     ap.add_argument("--from-format", choices=["csv", "json"], help="override file format (else by extension)")
     ap.add_argument("--source-label", help="provenance text for the subtitle in --from mode "
                     "(e.g. 'Alpha Vantage equity via MCP')")
-    ap.add_argument("--interval", default="1d", type=_arg_interval, help="target bar size, e.g. 1h 4h 1d")
-    ap.add_argument("--days", type=_arg_posdays, default=14, help="lookback in days (fractional ok, e.g. 0.1 for ~2.4h)")
+    ap.add_argument("--interval", default="1d", help="target bar size, e.g. 1h 4h 1d")
+    ap.add_argument("--days", type=float, default=14, help="lookback in days (fractional ok, e.g. 0.1 for ~2.4h)")
     ap.add_argument("--market", default="USD", help="quote market for av-crypto")
-    ap.add_argument("--adjusted", action="store_true",
-                    help="av-equity DAILY: use the split/dividend-adjusted series (TIME_SERIES_DAILY_ADJUSTED; "
-                         "may need a premium key). Default is RAW — a split shows as a price cliff")
     ap.add_argument("--dataset", default="GLBX.MDP3")
     ap.add_argument("--stype", default="continuous", help="databento stype_in")
     ap.add_argument("--moex-market", choices=["index", "shares", "bonds", "currency", "futures", "options"],
@@ -575,15 +466,12 @@ def main(argv=None):
     ap.add_argument("--env-file")
     ap.add_argument("--open", action="store_true")
     a = ap.parse_args(argv)
-    if a.from_path:
+    if a.from_path and not a.source:
         a.source = "file"
     if not a.source:
         ap.error("--source is required (or pass --from PATH to render a local file)")
     if a.source == "file" and not a.from_path:
         ap.error("--source file requires --from PATH")
-
-    for w in _warn_ignored(a):     # §0.5: never swallow an inapplicable flag silently
-        print(w, file=sys.stderr)
 
     tmin = interval_minutes(a.interval)
     tz_off, tz_lab = SOURCE_TZ[a.source]  # bars are stamped in this tz; size the window in it too
@@ -592,17 +480,11 @@ def main(argv=None):
     start = a.start or cutoff.strftime("%Y-%m-%d")
 
     if a.source == "databento":
-        try:
-            bars, base = fetch_databento(a.symbol, a.stype, a.dataset, start, a.end, tmin, a.env_file)
-        except urllib.error.HTTPError as e:   # a 4xx here = symbol/params, not a code bug — say so
-            if e.code >= 500:
-                raise
-            sys.exit(f"error: Databento rejected '{a.symbol}' (HTTP {e.code}) — check the symbol "
-                     f"(continuous looks like ES.v.0), --stype {a.stype}, --dataset {a.dataset}")
+        bars, base = fetch_databento(a.symbol, a.stype, a.dataset, start, a.end, tmin, a.env_file)
     elif a.source == "av-crypto":
         bars, base = fetch_av_crypto(a.symbol, a.market, tmin, a.env_file)
     elif a.source == "av-equity":
-        bars, base = fetch_av_equity(a.symbol, tmin, a.env_file, adjusted=a.adjusted)
+        bars, base = fetch_av_equity(a.symbol, tmin, a.env_file)
     elif a.source == "file":
         bars, base = fetch_file(a.from_path, a.from_format)
         # the file IS the intended window (already scoped by the caller) — keep every
@@ -624,8 +506,6 @@ def main(argv=None):
     else:
         src = {"databento": f"Databento {a.dataset}", "av-crypto": "Alpha Vantage crypto",
                "av-equity": "Alpha Vantage equity", "moex": "MOEX ISS"}[a.source]
-        if a.source == "av-equity" and tmin >= 1440:   # split-cliff honesty: name the series kind
-            src += " · adjusted" if a.adjusted else " · raw (unadjusted)"
         subtitle = f"{src} · {base}->{a.interval} · {len(D)} bars · {D[0][0]} -> {D[-1][0]} {tz_lab}"
     title = f"{a.symbol} · {a.interval}"
     open(a.out, "w", encoding="utf-8").write(render_svg(D, title, subtitle, a.theme))

@@ -1,6 +1,6 @@
 import json
 import unittest
-from release import NAME, ROOT, runtime_member, verify
+from release import NAME, ROOT, PAYLOAD, verify
 
 
 class ReleaseTests(unittest.TestCase):
@@ -17,15 +17,28 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(json.loads((plugin/manifest/"plugin.json").read_text())["version"],lock["version"])
             skill = plugin/"skills/market-data"
             copies.append((skill/"SKILL.md").read_bytes())
-            self.assertEqual((skill/"market-data-host.json").exists(),prefix=="chatgpt")
+            self.assertEqual({p.relative_to(skill).as_posix() for p in skill.rglob("*") if p.is_file()}, set(PAYLOAD))
             self.assertTrue((skill/"scripts/chart.py").is_file())
             self.assertIn("version: "+lock["version"]+"\n",copies[-1].decode())
         self.assertEqual(*copies)
 
-    def test_only_runtime_package_members_are_selected(self):
-        for file in ("market-data/.env","market-data/store.tgz","market-data/scripts/test_chart.py",
-                     "market-data/store/options.sqlite","market-data/private/notes.md"):
-            self.assertFalse(runtime_member(file))
-        for invalid in ("../SKILL.md","market-data/../../.git/config","/etc/passwd"):
-            with self.assertRaises(ValueError):
-                runtime_member(invalid)
+    def test_chart_renders_in_each_package(self):
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from xml.etree import ElementTree
+
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            candles = folder / "bars.csv"
+            candles.write_text("date,open,high,low,close,volume\n2024-01-02,100,105,99,103,12\n")
+            for prefix in ("", "chatgpt"):
+                script = ROOT/prefix/"plugins"/NAME/"skills/market-data/scripts/chart.py"
+                chart = folder/"price.svg"
+                subprocess.run([sys.executable, str(script), "TEST", "--from", str(candles),
+                                "--source-label", "Fixture UTC", "--out", str(chart)], check=True)
+                labels = " ".join(ElementTree.parse(chart).getroot().itertext())
+                self.assertIn("Fixture UTC", labels)
+                self.assertIn("TEST", labels)
+                chart.unlink()

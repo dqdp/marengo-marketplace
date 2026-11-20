@@ -2,13 +2,9 @@
 import argparse
 import hashlib
 import json
-import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 import re
-import stat
 import subprocess
-import tempfile
-from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 NAME = "marengo-market-data"
@@ -45,47 +41,28 @@ def manifests(version):
                 interface={"displayName":TITLE,"shortDescription":DESCRIPTION,"developerName":"Marengo","category":"Productivity"}))}
 
 
-def runtime_member(name):
-    p = PurePosixPath(name)
-    if p.is_absolute() or ".." in p.parts or "\\" in name or p.as_posix() != name or p.parts[:1] != ("market-data",):
-        raise ValueError("Unexpected archive path: " + name)
-    parts = p.parts[1:]
-    if len(parts) == 1:
-        return parts[0] in {"SKILL.md","SETUP.md",".env.example","USER_INSTALLATION_RUNBOOK_RU.md","market-data-host.json"}
-    if len(parts) != 2:
-        return False
-    folder, file = parts
-    if folder == "references":
-        return file.endswith(".md")
-    return (folder == "scripts" and not file.startswith(("test_","."))
-            and (file.endswith((".py",".min.js",".txt")) or file in {"install_plugins.sh","prewarm_sync.sh"}))
+EDITION = "editions/price-charts"
+PAYLOAD = ("SKILL.md", "scripts/chart.py", "scripts/greeks.py", "references/alpha-vantage.md")
 
 
-def build(source, ref, temporary):
+def build(source, ref):
     commit = git(source, "rev-parse", "--verify", "--end-of-options", ref+"^{commit}")
-    checkout = temporary/"source"
-    subprocess.run(["git","clone","-q","--no-hardlinks","--no-checkout","--",str(source),str(checkout)],check=True)
-    git(checkout,"checkout","-q","--detach",commit)
-    match = re.search(r"^version: (\S+)$",(checkout/"SKILL.md").read_text(encoding="utf-8"),re.M)
+    payload = {}
+    for name in PAYLOAD:
+        path = f"{EDITION}/{name}"
+        entry = git(source, "ls-tree", commit, "--", path)
+        if not entry.startswith("100644 blob ") and not entry.startswith("100755 blob "):
+            raise ValueError("Missing regular skill file: " + path)
+        payload[name] = subprocess.check_output(["git", "-C", str(source), "show", f"{commit}:{path}"])
+    match = re.search(r"^version: (\S+)$", payload["SKILL.md"].decode("utf-8"), re.M)
     if not match or not VERSION.fullmatch(match[1]):
         raise ValueError("Invalid skill version")
     version = match[1]
     result = manifests(version)
-    for target, prefix in (("claude",""),("openai","chatgpt/")):
-        env = dict(os.environ, MARKET_DATA_DEFS_BUNDLE_SOURCE=str(temporary/"empty"))
-        subprocess.run(["bash","scripts/package.sh","--target",target], cwd=checkout,env=env,check=True,stdout=subprocess.DEVNULL)
-        stem = "market-data-openai" if target == "openai" else "market-data"
-        with ZipFile(checkout/"dist"/f"{stem}-skill-v{version}.zip") as archive:
-            for info in archive.infolist():
-                if info.is_dir() or not runtime_member(info.filename):
-                    continue
-                dest = f"{prefix}plugins/{NAME}/skills/{info.filename}"
-                if dest in result or stat.S_ISLNK(info.external_attr >> 16):
-                    raise ValueError("Invalid member: "+info.filename)
-                result[dest] = archive.read(info)
-        if f"{prefix}plugins/{NAME}/skills/market-data/SKILL.md" not in result:
-            raise ValueError("Missing SKILL.md")
-    return result, {"version":version,"source":"dqdp/market_data_skill","commit":commit,
+    for prefix in ("", "chatgpt/"):
+        for name, content in payload.items():
+            result[f"{prefix}plugins/{NAME}/skills/market-data/{name}"] = content
+    return result, {"version":version,"source":"dqdp/market_data_skill","commit":commit,"edition":EDITION,
                     "sha256":{k:digest(v) for k,v in sorted(result.items())}}
 
 
@@ -117,8 +94,7 @@ def main():
         print("Verified",verify()["version"])
         return
     old=verify() if (ROOT/"release.json").exists() else None
-    with tempfile.TemporaryDirectory() as directory:
-        files,lock=build(args.source.resolve(),args.ref,Path(directory))
+    files,lock=build(args.source.resolve(),args.ref)
     if old == lock:
         print("Already current",lock["version"])
         return
