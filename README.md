@@ -2,9 +2,9 @@
 
 Публичный каталог скилла для ChatGPT Work и Claude Cowork. Обе поставки собираются из одного коммита приватного Market Data Skill. Версия, исходный коммит и контрольные суммы файлов хранятся в [release.json](release.json).
 
-[Полная инструкция для Windows](docs/WINDOWS_SETUP.md) содержит шаги установки из облака, параметры OAuth и справочник коннектора. В Work откройте существующий Marengo Data или создайте личный плагин через Plugin Creator по [публичной конфигурации Marengo Data](connectors/marengo-data). В Claude Cowork добавьте Marengo по HTTPS. Отдельный скилл оба приложения получают из этого каталога.
+[Инструкция для Windows](docs/WINDOWS_SETUP.md) содержит обновление уже установленного плагина и первое подключение. В настольном ChatGPT откройте **Marengo Data** из этого каталога. Его [нативная конфигурация OAuth](chatgpt/connectors/marengo-data/.mcp.json) входит в плагин. В Claude Cowork добавьте Marengo по HTTPS.
 
-[Скачать инструкцию отдельным документом Word](docs/Marengo-Windows-Setup-1.169.2.docx?raw=true)
+[Предыдущая Word-инструкция к личному плагину 0.1.4](docs/Marengo-Windows-Setup-1.169.2.docx?raw=true)
 
 ## Первое подключение
 
@@ -22,18 +22,18 @@
 
 ```powershell
 codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref main
+codex plugin add marengo-data@marengo
 codex plugin add marengo-market-data@marengo
 codex plugin list --marketplace marengo --json
 ```
 
-Ожидаемый результат — установленная и включённая редакция 1.169.2 или более новая. Если `marengo` уже зарегистрирован, проверьте источник и действуйте по разделу 4 инструкции. Для обновления каталога выполните `codex plugin marketplace upgrade marengo`, примените доступное обновление плагина и сверьте установленную версию. Полностью закройте и откройте настольный ChatGPT и проверьте **Work → Plugins → Marengo → Marengo Market Data** в новом чате. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
+Ожидаются включённые Marengo Data 0.1.5 и Marengo Market Data 1.169.2 или более новые версии. Если `marengo` уже зарегистрирован, проверьте источник и действуйте по разделу 4 инструкции. Для обновления каталога выполните `codex plugin marketplace upgrade marengo`, примените доступное обновление плагина и сверьте установленную версию. Полностью закройте и откройте настольный ChatGPT и проверьте **Work → Plugins → Marengo → Marengo Market Data** в новом чате. [Документация OpenAI](https://developers.openai.com/plugins/build/plugins#add-a-marketplace-from-the-cli)
 
 При переходе с вручную загруженного скилла выключите прежнюю копию после установки из каталога. Если прежний ZIP распаковывали в личную папку skills, перенесите только старую папку market-data за пределы каталогов обнаружения.
 
 **Подключение данных на чистом компьютере**
 
-1. Добавьте HTTPS MCP Marengo `https://mcp.marengo.net/mcp` в настройках коннекторов клиента. Войдите через OAuth под приглашённой учётной записью Marengo. Личный ключ Databento сохраняется в кабинете Marengo. Откройте каталог инструментов Marengo в новой сессии.
-   Для личного Codex с уже добавленным сервером команда входа с продлением — `codex mcp login marengo --scopes data:read,offline_access`. Если клиент использует фиксированные OAuth scopes, добавьте `offline_access` к существующему списку в настройках Marengo. Для чтения котировок достаточно права ресурса `data:read`. В ChatGPT Work и Claude Cowork разрешения и хранение токена зависят от самого клиента. Для приёмки один раз войдите в каждом клиенте, закройте его, затем после истечения исходного access token откройте новую сессию и вызовите `marengo_platform_catalog`. Запишите результат проверки и факт запроса согласия. Значения токенов в отчёт не включайте. [Настройки refresh token в Logto](https://docs.logto.io/integrate-logto/application-data-structure)
+1. В настольном ChatGPT после установки **Marengo Data** откройте настройки MCP и пройдите OAuth для `marengo`. Для личной копии 0.1.4 из Plugin Creator и уже подключённого Git-каталога шаги приведены в [разделе 2 инструкции](docs/WINDOWS_SETUP.md#2-marengo-data-в-настольном-chatgpt-на-windows). В Claude Cowork следуйте разделу 3.
 
 2. Для MOEX выпустите в БКС Trade API refresh-токен с правом «Только для чтения». В настольном ChatGPT откройте Настройки → Интеграции → Плагины → Добавить сервер MCP. Выберите HTTP и адрес `https://be.broker.ru/trade-api-mcp-server/mcp`. В Claude Desktop откройте Settings → Connectors → Add custom connector и задайте тот же адрес. Для интерфейса с секцией Request headers выберите No sign-in. Укажите в настройках подключения заголовок `Authorization` со значением `Bearer <refresh-токен>`. Если секция заголовков недоступна, используйте способ установки для своей ОС из официальной инструкции. Откройте новую сессию Work или Cowork и проверьте доступность инструментов БКС. [Инструкция БКС для обоих клиентов](https://trade-api.bcs.ru/mcp/)
 3. Подключите существующий Alpha Vantage MCP с прежней авторизацией. В новой сессии запросите котировку SPY через Alpha Vantage, ценовой график CME через Marengo и bid/ask SBER через БКС. Для каждой проверки сверьте источник, инструмент и время котировки. Вне торговой сессии зафиксируйте время последнего обновления.

@@ -4,9 +4,9 @@
   "commit": "6cd5ad7ff68acd2ee360fd413a1384e274cbe2ee",
   "edition": "editions/price-charts",
   "sha256": {
-    ".agents/plugins/marketplace.json": "865cff996ef54c608b0f868c0b1bd021aca2ac319baacc186968148c45836b18",
+    ".agents/plugins/marketplace.json": "3103cf941ce4661fa0d3a575cfe04d07a38ea2fcb0969297c8b13989813fdd39",
     ".claude-plugin/marketplace.json": "470326e7401b30d82c1d7541682cf9d38ea7008cb9f4867a6d15ed12e87e31e8",
-    "chatgpt/.agents/plugins/marketplace.json": "70502e2036e2442b10446540ed496923faf6e9ce665fb7074682bde6ecc6cd6c",
+    "chatgpt/.agents/plugins/marketplace.json": "3696e6dce0062a12aa582bbac046e3d56e1ab3165a2c0ed8dc9d1a32ed2ca18f",
     "chatgpt/plugins/marengo-market-data/.codex-plugin/plugin.json": "aeb9ab9d5ba021aa5319b332d0504951cac252ddb7516a88c19207e3749f9bce",
     "chatgpt/plugins/marengo-market-data/skills/market-data/SKILL.md": "7cd69129f6eae8e6d5e2abec175fa49665741d80e3b3e02d41144f8a09b55547",
     "chatgpt/plugins/marengo-market-data/skills/market-data/references/alpha-vantage.md": "979a75b19d07cceef43c8e107d0848537ad83ed5347d76dc9ad465d6e07b3f35",

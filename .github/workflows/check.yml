@@ -22,6 +22,10 @@ jobs:
           from pathlib import Path
           old = json.loads(subprocess.check_output(['git','show',os.environ['BASE_SHA']+':release.json']))
           new = json.loads(Path('release.json').read_text())
+          # Shared index edits are validated by tools/release.py. The two plugins version independently.
+          for lock in (old, new):
+              for path in ('.agents/plugins/marketplace.json', 'chatgpt/.agents/plugins/marketplace.json'):
+                  lock['sha256'].pop(path)
           if new != old and tuple(map(int,new['version'].split('.'))) <= tuple(map(int,old['version'].split('.'))):
               raise SystemExit('Bump the source skill version before publishing an update')
           PY
@@ -56,4 +60,13 @@ jobs:
           $plugin = @($listing.installed | Where-Object { $_.pluginId -eq 'marengo-market-data@marengo' })
           if ($plugin.Count -ne 1 -or $plugin[0].version -ne $expected -or !$plugin[0].installed -or !$plugin[0].enabled) {
             throw "Expected installed and enabled Marengo Market Data $expected"
+          }
+          codex.cmd plugin add marengo-data@marengo --json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $listing = codex.cmd plugin list --marketplace marengo --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $connector = @($listing.installed | Where-Object { $_.pluginId -eq 'marengo-data@marengo' })
+          $expected = (Get-Content chatgpt/connectors/marengo-data/.codex-plugin/plugin.json -Raw -Encoding utf8 | ConvertFrom-Json).version
+          if ($connector.Count -ne 1 -or $connector[0].version -ne $expected -or !$connector[0].installed -or !$connector[0].enabled) {
+            throw "Expected installed and enabled Marengo Data $expected"
           }
