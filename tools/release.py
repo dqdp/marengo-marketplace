@@ -31,8 +31,13 @@ def manifests(version):
                    "policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"}, "category":"Productivity"}
     common = {"name": NAME, "description": DESCRIPTION, "version": version, "author":{"name":"Marengo"}}
     claude = {"name":"marengo", "owner":{"name":"Marengo"}, "plugins":[entry]}
-    openai = {"name":"marengo", "interface":{"displayName":"Marengo"}, "plugins":[codex_entry]}
-    codex_root = dict(openai, plugins=[dict(codex_entry, source={"source":"local","path":"./chatgpt/plugins/"+NAME})])
+    connector = dict(codex_entry, name="marengo-data",
+                     source={"source": "local", "path": "./connectors/marengo-data"})
+    openai = {"name":"marengo", "interface":{"displayName":"Marengo"}, "plugins":[codex_entry, connector]}
+    codex_root = dict(openai, plugins=[
+        dict(item, source={"source": "local", "path": "./chatgpt/" + item["source"]["path"][2:]})
+        for item in openai["plugins"]
+    ])
     return {".claude-plugin/marketplace.json":encode(claude),
             ".agents/plugins/marketplace.json":encode(codex_root),
             "chatgpt/.agents/plugins/marketplace.json":encode(openai),
@@ -68,7 +73,10 @@ def build(source, ref):
 
 def managed_paths():
     folders = ("plugins","chatgpt",".claude-plugin",".agents")
-    return {p.relative_to(ROOT).as_posix() for f in folders for p in (ROOT/f).rglob("*") if p.is_file() or p.is_symlink()}
+    # The connector is released in this repository independently of the generated skill.
+    connector = ROOT / "chatgpt/connectors/marengo-data"
+    return {p.relative_to(ROOT).as_posix() for f in folders for p in (ROOT/f).rglob("*")
+            if not p.is_relative_to(connector) and (p.is_file() or p.is_symlink())}
 
 
 def verify():

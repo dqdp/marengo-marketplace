@@ -1,6 +1,6 @@
 # Установка Marengo на Windows
 
-ChatGPT Work и Claude Cowork · Личные аккаунты · 23 ноября 2026 г.
+ChatGPT Work и Claude Cowork · Личные аккаунты · 24 ноября 2026 г.
 
 Marengo предоставляет доступ к COT и Databento через облачный сервер. Отдельный скилл Marengo Market Data 1.169.2 выбирает источник и строит обычные ценовые графики. Для установки нужны публичный репозиторий, учётная запись Marengo и реквизиты выбранных поставщиков. Приложения получают скилл и настройки через интернет. Оператору достаточно этой инструкции.
 
@@ -21,23 +21,27 @@ Marengo предоставляет доступ к COT и Databento через �
 
 В **ChatGPT Work** подключите Marengo Data по разделу 2, в **Claude Cowork** — по разделу 3. Затем добавьте скилл из одного и того же публичного репозитория в каждом приложении (разделы 4–5). Для MOEX и Alpha Vantage выполните раздел 6. После установки проверьте данные в обоих клиентах по разделу 7.
 
-## 2. Облачный Marengo Data в ChatGPT Work
+## 2. Marengo Data в настольном ChatGPT на Windows
 
-1. Откройте настольный ChatGPT под личным аккаунтом клиента. В **Work → Plugins → Installed / Personal** найдите **Marengo Data**. Если он уже есть, откройте карточку и перейдите к **Connect**. У каждого клиента свой вход в Marengo.
-2. Для новой установки откройте **Plugins → Add (+) → Plugin Creator**. Если предложено, установите Plugin Creator. Отправьте ему текст ниже, включая ссылку на исходную конфигурацию. Ссылка открывается без учётной записи GitHub. Plugin Creator сохраняет плагин в текущем личном аккаунте. [Создание личного плагина в ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt)
+Откройте **Work → Plugins** на компьютере, на котором будете работать. Рабочее подключение к данным предоставляет плагин **Marengo Data** из каталога **Marengo**, версия **0.1.5**. Встроенный скилл и параметры OAuth устанавливаются вместе с ним.
 
-**Текст для Plugin Creator**
+**Если плагин уже установлен.** Посмотрите его источник. Экземпляр `marengo-data@marengo` можно обновить из того же каталога. Путь в логе вида `created-by-me-remote\marengo-data\0.1.4` относится к личной копии Plugin Creator. Для этой копии с ошибкой `unknown field extensions` один раз установите **Marengo Data** из репозитория, как описано ниже. После успешной проверки можно отключить в Desktop прежнюю личную копию. Существующее подключение кабинета Marengo и установку скилла Marengo Market Data можно сохранить.
 
-> Создай в моём личном аккаунте приватный плагин Marengo Data по исходникам из этой папки GitHub. Возьми plugin.json, mcp.json и встроенный skills/market-data/SKILL.md. Сохрани существующий HTTPS-сервер, OAuth и запрошенные scopes. Используй имя marengo-data и версию 0.1.4. Если этот плагин уже есть, покажи его карточку. Дай ссылку на установку и Connect. Исходники: https://github.com/dqdp/marengo-marketplace/tree/5b28d992cbcab7bf3f6e27849d4c24ed70ab3d89/connectors/marengo-data
+Для установки или обновления откройте PowerShell под тем же пользователем Windows, что и ChatGPT. Потребуются Git и Codex CLI с командой `plugin marketplace` (раздел 4). Если каталог **Marengo** уже подключён к `dqdp/marengo-marketplace` на ветке `main`, выполните:
 
-3. Откройте карточку **Marengo Data → Install plugin → Connect**. В открывшемся браузере войдите в приглашённую учётную запись Marengo и разрешите продление доступа. Вернитесь в тот же Work. При вводе секретов используйте только форму поставщика.
-4. В новом чате Work включите **Marengo Data**. Попросите «Вызови через Marengo инструмент marengo_platform_catalog и покажи возвращённые коннекторы». У пользователя с обоими разрешениями в ответе появятся cot и databento. Затем добавьте облегчённый скилл по разделу 4.
+```powershell
+codex plugin marketplace upgrade marengo
+codex plugin add marengo-data@marengo
+```
 
-**Если Creator не открыл репозиторий.** Передайте ему параметры из следующей строки и попросите создать приватный плагин для уже работающего MCP. Полные манифесты и текст встроенного скилла доступны в приложениях А–Г самого документа.
+При первом подключении каталога выполните:
 
-Сервер marengo · Streamable HTTP · URL и OAuth resource https://mcp.marengo.net/mcp · OAuth provided · Client ID wokckr7tswq8b1xeuodil · tokenEndpointAuthMethod none · baseScopes data:read, data:write, offline_access · defaultScopes [] · oidcEnabled false · заголовки пустые. Публичному клиенту Work секрет не нужен.
+```powershell
+codex plugin marketplace add https://github.com/dqdp/marengo-marketplace.git --ref main
+codex plugin add marengo-data@marengo
+```
 
-Если в личном аккаунте недоступно сохранение плагина, отсутствует Connect или вызов каталога не проходит, зафиксируйте этап и ошибку. Установку для этого аккаунта можно принять после успешного вызова в Work. Установка скилла или результат в Codex CLI сами по себе проверяют другой этап.
+Проверьте `codex plugin list --marketplace marengo --json`. В списке установленных ожидается `marengo-data@marengo` версии 0.1.5 или новее. Перезапустите ChatGPT Desktop. В настройках MCP выберите **marengo → Authenticate**, войдите на `auth.marengo.net` с выданной учётной записью и подтвердите доступ. В новом чате Work на этом компьютере попросите «Вызови `marengo_platform_catalog` и покажи идентификаторы доступных коннекторов». При наличии обоих разрешений ожидаются `cot` и `databento`.
 
 ## 3. Marengo MCP в Claude Cowork
 
@@ -175,7 +179,7 @@ codex plugin list --marketplace marengo --json
 
 ### Тот же аккаунт на Linux
 
-В терминале того пользователя, который запускает настольный ChatGPT, выполните команды ниже. Если marengo уже добавлен, сначала сверьте его URL и ветку по разделу 4. Откройте Work заново и повторите проверку из раздела 7. Личный облачный плагин проверьте в карточке своего аккаунта. Доступность Cowork на этом компьютере проверяйте в используемом клиенте Claude.
+В терминале того пользователя, который запускает настольный ChatGPT, выполните команды ниже. Если marengo уже добавлен, сначала сверьте его URL и ветку по разделу 4. Откройте Work заново и повторите проверку из раздела 7. Проверьте Marengo Data из каталога Marengo по разделу 2. Доступность Cowork на этом компьютере проверяйте в используемом клиенте Claude.
 
 ```bash
 codex plugin marketplace list --json
@@ -211,7 +215,7 @@ MCP endpoint: https://mcp.marengo.net/mcp
 
 Доступ предоставляет администратор организации. Самостоятельная регистрация закрыта. После установки выполните Connect и войдите с выданной учётной записью Marengo.
 
-[Исходная конфигурация Marengo Data для Work](https://github.com/dqdp/marengo-marketplace/tree/5b28d992cbcab7bf3f6e27849d4c24ed70ab3d89/connectors/marengo-data) · [Публичный каталог облегчённого скилла](https://github.com/dqdp/marengo-marketplace)
+[Архивная конфигурация личной копии Marengo Data 0.1.4](https://github.com/dqdp/marengo-marketplace/tree/5b28d992cbcab7bf3f6e27849d4c24ed70ab3d89/connectors/marengo-data) · [Публичный каталог облегчённого скилла](https://github.com/dqdp/marengo-marketplace)
 
 ## Приложение Б. Манифесты Marengo Data
 
