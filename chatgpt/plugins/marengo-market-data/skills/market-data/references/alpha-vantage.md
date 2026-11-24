@@ -1,9 +1,12 @@
 # Alpha Vantage Reference (equities, ETFs, options, FX, crypto, indices, macro, news)
 
-Open this file when a request routes to Alpha Vantage: equities/ETFs, equity/ETF
-options, FX, crypto, indices, fundamentals, earnings, macro, technical indicators,
-news/sentiment, or benchmark commodity spot. The router (`SKILL.md`) decides
-routing and the shared options model; this file holds the AV-specific detail.
+Use this reference for Alpha Vantage equity, ETF and index prices, equity/ETF option
+chains, native greeks, FX, crypto, fundamentals and economic data. When the user
+selects Alpha Vantage for a particular equity/ETF option bid/ask, use its
+`REALTIME_OPTIONS` with the contract ID if available. Report the provider's
+quote and timestamp or session date. Use the NBBO label only when the provider
+confirms it. For a US listed option's NBBO or historical quotes with no source
+specified, see the OPRA route in `SKILL.md`.
 
 Asset-class coverage verified live 2026-06-29 (real data on the current key).
 
@@ -66,24 +69,24 @@ Simpler and richer than Databento futures options: AV returns greeks/IV natively
 
 - `REALTIME_OPTIONS` returns the real live chain with two-sided quotes, sizes,
   volume, open interest, and (with `require_greeks=true`) delta/gamma/theta/vega/IV,
-  dated today. Default for current/live chains. `REALTIME_OPTIONS_FMV`,
+  dated today. Use it for the current Alpha Vantage chain. `REALTIME_OPTIONS_FMV`,
   `REALTIME_PUT_CALL_RATIO`, `REALTIME_VOLUME_OPEN_INTEREST_RATIO` also work.
 - `HISTORICAL_OPTIONS` / `HISTORICAL_PUT_CALL_RATIO` for past dates (default =
   previous session, or `date=YYYY-MM-DD`), also with greeks/IV.
 - No `entitlement` param — plan-gated. AV IS the greeks/IV source for equity
   options (Databento gives none).
 - Coverage = equities + ETFs (incl. daily expiries + LEAPS — verified SPY to 2028).
-  Cash-index options (SPX/NDX/VIX) NOT available → use ETF proxies (SPY≈S&P,
-  QQQ≈Nasdaq-100, IWM≈Russell-2000).
+  For options on cash indices such as SPX, NDX or VIX, check the listed
+  contract in OPRA.PILLAR. An ETF option references a different underlying.
 - Live during US options RTH 09:30-16:00 ET; outside RTH = last session. The `date`
   field shows the session; no intraday tick timestamp — cross-check the underlying
   quote if second-level freshness matters.
 - Entitlement tell: if `REALTIME_OPTIONS` returns an ARTIFICIAL SAMPLE (a `message`
   about a 600/1200 req-min premium plan + placeholder rows `contractID`/`symbol`
   "XXYYZZ…", `expiration` "2099-99-99", `date` "2049-99-99"), the key is NOT
-  options-entitled → don't present those fake numbers, fall back to
-  `HISTORICAL_OPTIONS`, tell the user realtime options need the premium plan. (The
-  current key returns real data.)
+  options-entitled. Report that a live quote is unavailable through this connection.
+  Use `HISTORICAL_OPTIONS` when the request permits a historical observation and
+  identify its session.
 
 Branch B steps (use the fewest calls — see the router's "fewest calls" rule):
 1. ONE call answers ATM / moneyness / N-delta: `REALTIME_OPTIONS` with `symbol`,
@@ -209,6 +212,6 @@ identity, depth/granularity, freshness, and rate-limit differences.
 - "EUR/USD now" → `CURRENCY_EXCHANGE_RATE` or `FX_INTRADAY` (no entitlement).
   "BTC price" → `CURRENCY_EXCHANGE_RATE` (no entitlement).
 - "MSFT fundamentals" → `COMPANY_OVERVIEW`. "US CPI" → `CPI` (no entitlement).
-- "AAPL options chain now" → `REALTIME_OPTIONS` with `require_greeks=true` (real
+- "AAPL options chain with provider greeks" → `REALTIME_OPTIONS` with `require_greeks=true` (real
   live chain + greeks; RTH 09:30-16:00 ET else last session). `HISTORICAL_OPTIONS`
   for past dates. Options on futures (e.g. "ES options") go to Databento.

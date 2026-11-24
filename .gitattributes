@@ -2,4 +2,5 @@
 .agents/** text eol=lf
 .claude-plugin/** text eol=lf
 chatgpt/** text eol=lf
+connectors/marengo-data/skills/market-data/SKILL.md text eol=lf
 plugins/** text eol=lf

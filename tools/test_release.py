@@ -40,6 +40,12 @@ class ReleaseTests(unittest.TestCase):
                 "oauth": {"clientId": "skc58ai86phnakuaqy9y6", "callbackPort": 53682,
                           "callbackUrl": "http://127.0.0.1:53682/callback"}}})
 
+    def test_portable_and_desktop_connector_ship_the_same_skill(self):
+        portable = ROOT / "connectors/marengo-data"
+        desktop = ROOT / "chatgpt/connectors/marengo-data"
+        skill = "skills/market-data/SKILL.md"
+        self.assertEqual((portable / skill).read_bytes(), (desktop / skill).read_bytes())
+
     def test_chart_renders_in_each_package(self):
         import subprocess
         import sys
